@@ -1,0 +1,24 @@
+# PRD — Bank Data Tuberkulosis Kota Sukabumi
+
+## Original problem statement
+Aplikasi bank data tuberkulosis sekota sukabumi , didalam nya ada data 1. SPM "Terduga TBC, 2. Treatment Coverage, 3. Keberhasilan Pengobatan , 4. Enrollment TB SO, 5. Penemuan Kasus TB RO, 6. Enrollment TB RO , 7. Keberhasilan TB RO , 8. TBC Anak, 9. TBC HIV, 10. TPT, 11. Investigasi Kontak " ini di bagi 2 Investigasi Kontak Bakteriologis dan Investigasi Kontak Klinis,  , tiap Point memuat data Per Keluarhan dan faskes, masukan juga target angka, target persen, capaian angka, capaian persen , total capaian angka, total capain persen
+
+User choices: input manual via form (editable); admin login for input, public view only; target tahunan diinput, capaian per bulan, triwulan/semester/tahunan otomatis; dashboard grafik + export Excel; grafik bisa di download. Daftar 33 kelurahan & 25 faskes diberikan user.
+
+## Architecture
+- FastAPI + MongoDB (collections: users, units, targets, capaian, login_attempts), JWT Bearer auth (admin seeded from env).
+- React + shadcn + recharts; xlsx (Excel export), html-to-image (PNG chart download).
+- Period target = target tahunan × (jumlah bulan/12); capaian % = capaian / target periode × 100; total = sum semua unit.
+
+## User personas
+- Admin Dinkes (input/edit data), publik/pimpinan (lihat dashboard).
+
+## Implemented (2026-10-12)
+- Dashboard 12 indikator, filter tahun/periode (bulan/triwulan/semester/tahunan)/basis (kelurahan/faskes), grafik + unduh PNG, export Excel rekap.
+- Detail indikator: tab per kelurahan/faskes, tabel target angka/%, capaian angka/%, baris total, grafik per unit & tren bulanan (unduh PNG), export Excel.
+- Admin: login, grid input target tahunan + target % + capaian 12 bulan, master data kelurahan & faskes CRUD.
+- Tested: backend 24/24, frontend core flows pass.
+
+## Backlog
+- P1: Import Excel massal; riwayat perubahan (audit log); beberapa akun admin/operator per faskes.
+- P2: Perbandingan antar tahun; peta kelurahan; mode gelap.

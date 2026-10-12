@@ -1,0 +1,35 @@
+{
+  "summary": "First iteration end-to-end testing of Bank Data TBC Kota Sukabumi. Backend: 24 pytest tests covering public endpoints (indicators=12, kelurahan>=33, faskes>=25, summary, report, trend), auth (login success/wrong-password/me, admin-endpoint 401 without token), units CRUD (TEST_ prefixed create/update/delete + duplicate 400), input save+persist + aggregation math (bulan/triwulan/semester/tahunan factor correct, capaian_persen correct), validation (negative capaian rejected, invalid period index 400). ALL 24 PASSED. Frontend: dashboard loads with 12 indicator cards, filters (tahun/periode/periode-index/unit) work, chart download PNG + Export Excel buttons present, indicator detail page shows kelurahan/faskes tabs, totals (angka/persen/capaian), export excel; /admin/input correctly redirects to /login when unauthenticated; wrong password shows login-error 'Email atau password salah'; correct admin login stores tbc_token in localStorage and redirects back to /admin/input; input grid renders target-angka-{i}, target-persen-{i}, input-capaian-{i}-{month}, btn-save-input; /admin/master shows add input + unit-edit/unit-delete; adding TEST_UI_UNIT_FOO succeeded and was cleaned up via DELETE. Cleanup performed: isolated test year 2099 values reset to 0; TEST_ unit deleted.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "CORS", "issue": "CORS_ORIGINS='*' combined with allow_credentials=True is invalid per spec (browsers reject). Also cookies set with samesite='none', secure=True — cookie-based auth may fail on strict browsers; however frontend uses Bearer header via localStorage, so functional login still works."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard (summary chart)", "issues": ["Recharts logs 'width(-1) height(-1)' warnings on initial render — chart container appears before layout settles. Visual works after render but noisy console."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Consider setting CORS_ORIGINS to explicit origin(s) instead of '*' since allow_credentials=True (spec compliance; current setup still works because frontend uses Bearer header, not cookies).",
+    "Optional: set a minHeight on ChartCard ResponsiveContainer to silence recharts width/height warnings."
+  ],
+  "critical_code_review_comments": [
+    "server.py line 198: cookie set with samesite='none', secure=True — relies on HTTPS; works in preview but will silently fail over HTTP (frontend's fallback to Bearer token mitigates).",
+    "server.py line 312: allow_origins=['*'] with allow_credentials=True — browsers will refuse credentialed requests; harmless now because UI uses Authorization header, but misleading.",
+    "server.py build_report (line 158): factor = len(months)/12 pro-rates annual target linearly across months — correct for the stated math and verified by tests.",
+    "No pagination/limit on /api/report rows but seeded data small (33 kelurahan / 25 faskes) so OK.",
+    "login_attempts lockout = 5 attempts/15min is correctly enforced per code review (not retested here to avoid locking the real admin account)."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% core flows"},
+  "test_credentials": "Admin gilangramadhan.zh1@gmail.com / Sukabumi2026! (from /app/memory/test_credentials.md) — verified working.",
+  "seed_data_creation": "Used isolated year=2099 for aggregation math tests; values reset to 0 after. TEST_KELURAHAN_PYTEST and TEST_UI_UNIT_FOO units created and deleted during tests. No residual test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All indicators, units, auth, CRUD and aggregation math are working as spec. Test file at /app/backend/tests/backend_test.py uses pytest-xdist (2 workers). Avoid >=5 wrong-password attempts to the real admin account — current code triggers 15-min lockout per IP+email. Login endpoint sets cookies with samesite=none/secure=true; frontend uses Bearer token from localStorage ('tbc_token'), so auth works despite potential cookie limitations."
+}
