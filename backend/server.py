@@ -31,8 +31,8 @@ JWT_ALG = "HS256"
 INDICATORS = [
     {"id": "spm_terduga", "no": 1, "name": "SPM Terduga TBC", "code": "SPM-TB"},
     {"id": "treatment_coverage", "no": 2, "name": "Treatment Coverage", "code": "TC"},
-    {"id": "keberhasilan_pengobatan", "no": 3, "name": "Keberhasilan Pengobatan", "code": "SR-SO"},
-    {"id": "enrollment_tb_so", "no": 4, "name": "Enrollment TB SO", "code": "ENR-SO"},
+    {"id": "enrollment_tb_so", "no": 3, "name": "Enrollment TB SO", "code": "ENR-SO"},
+    {"id": "keberhasilan_pengobatan", "no": 4, "name": "Keberhasilan Pengobatan", "code": "SR-SO"},
     {"id": "penemuan_kasus_tb_ro", "no": 5, "name": "Penemuan Kasus TB RO", "code": "CASE-RO"},
     {"id": "enrollment_tb_ro", "no": 6, "name": "Enrollment TB RO", "code": "ENR-RO"},
     {"id": "keberhasilan_tb_ro", "no": 7, "name": "Keberhasilan TB RO", "code": "SR-RO"},
