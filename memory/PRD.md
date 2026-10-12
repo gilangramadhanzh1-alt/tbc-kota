@@ -19,6 +19,12 @@ User choices: input manual via form (editable); admin login for input, public vi
 - Admin: login, grid input target tahunan + target % + capaian 12 bulan, master data kelurahan & faskes CRUD.
 - Tested: backend 24/24, frontend core flows pass.
 
+## Implemented (2026-10-12, sesi 2)
+- Basis Kelurahan TANPA target: hanya 2 indikator (Treatment Coverage, Penemuan Kasus TB RO), hanya capaian angka (dashboard, detail, tabel, grafik, Excel, admin input). Faskes tetap 12 indikator lengkap. Backend `indicators_for()`, `GET /api/indicators?unit_type=`.
+- Dokumen Pendukung per indikator & tahun (Emergent Object Storage, `backend/storage.py`): `POST /api/documents` (admin, multipart, PDF/Excel/Word/CSV ≤15MB), `GET /api/documents`, `GET /api/documents/{id}/download` (publik), `DELETE /api/documents/{id}` (soft delete). UI `DocumentPanel.jsx` di halaman detail indikator.
+- Branding diganti "DATA TBC KOTA SUKABUMI" (sidebar, H1, login, title, header Excel).
+- Tested: backend 33/33, frontend flows pass (iteration_2.json).
+
 ## Backlog
 - P1: Import Excel massal; riwayat perubahan (audit log); beberapa akun admin/operator per faskes.
 - P2: Perbandingan antar tahun; peta kelurahan; mode gelap.

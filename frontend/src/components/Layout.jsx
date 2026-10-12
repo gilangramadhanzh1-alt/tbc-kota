@@ -14,7 +14,7 @@ function Sidebar() {
         <div className="h-10 w-10 rounded-lg bg-amber-500 grid place-items-center"><Activity className="h-5 w-5 text-slate-900" /></div>
         <div>
           <div className="font-heading font-extrabold tracking-tight leading-tight">DATA TBC KOTA SUKABUMI</div>
-          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Kota Sukabumi</div>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Dinas Kesehatan</div>
         </div>
       </Link>
       <nav className="px-3 py-4 space-y-1 overflow-y-auto flex-1">

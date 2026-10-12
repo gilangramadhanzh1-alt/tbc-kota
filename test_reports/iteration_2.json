@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 2 verified the three new features: (A) Kelurahan basis = only 2 indicators (treatment_coverage, penemuan_kasus_tb_ro) with no target, (B) Documents (Emergent Object Storage) CRUD on indicator detail page, (C) Branding 'DATA TBC KOTA SUKABUMI'. Backend: added 9 new pytest tests (TestIndicatorFiltering + TestDocuments) covering indicators/summary filter by unit_type, document upload admin-only (401 without token), rejection of .txt/.png (400), acceptance of .csv/.pdf (200), public listing, public download with Content-Disposition, soft-delete removing from list, deleted download returns 404. Fixed one pre-existing stale test (TestPublic.test_summary) that assumed kelurahan returns 12 indicators -> switched to faskes. Full suite now 33/33 passed. Frontend (Playwright on preview URL): Dashboard with Per Kelurahan shows 2 KPI cards with -angka testid (no -persen), kelurahan-note visible, report table has exactly 3 columns (No/Indikator/Capaian Angka). Switching to Per Faskes shows 12 cards with -persen testid and 7-column report table. Indicator detail /indikator/spm_terduga: tab-kelurahan-view hidden, only tab-faskes-view shown; document-panel present, no btn-upload-doc for public. /indikator/treatment_coverage: tab-kelurahan-view shown; after clicking it kelurahan-note visible, stat-capaian-angka shown, stat-target-angka absent, table has 3 columns, chart legend has no 'Target' bar. Admin login OK via login-email-input/login-password-input/login-submit-button; after login the upload button appears, uploading TEST_ui_upload.csv via doc-file-input adds it to doc-list, btn-download-doc-0 href = {API}/api/documents/{id}/download, deleting via btn-delete-doc-0 with window.confirm accept removes it. Admin input page in Per Kelurahan hides 'Target Thn'/'Target %' columns and indicator dropdown has only 2 options; Per Faskes shows target columns and 12 indicator options. Branding 'DATA TBC KOTA SUKABUMI' present in sidebar, H1 'Data TBC Kota Sukabumi'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "CORS", "issue": "CORS_ORIGINS='*' combined with allow_credentials=True is still invalid per CORS spec (same as iteration 1). Non-blocking: frontend uses Bearer tokens from localStorage."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard summary chart", "issues": ["Recharts width(-1) height(-1) warnings on initial render — cosmetic console noise, chart renders correctly after."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py indicators_for() correctly restricts kelurahan to {treatment_coverage, penemuan_kasus_tb_ro}; used consistently by /indicators and /summary.",
+    "Documents soft-delete uses update {is_deleted: True}; list and download both filter is_deleted=False — correct. Delete-again on soft-deleted doc returns 404 due to match filter is_deleted=False.",
+    "Upload validates extension against whitelist (pdf/xls/xlsx/doc/docx/csv) BEFORE reading full file but still reads full body before size check — a very large upload could consume memory. Max 15MB enforced after read; acceptable for internal admin tool.",
+    "download_document uses Content-Disposition filename*=UTF-8'' which is RFC 5987 compliant for non-ASCII filenames. Good.",
+    "DocumentPanel.jsx uses process.env.REACT_APP_BACKEND_URL for the direct download anchor href (bypasses axios) — correct pattern for file downloads.",
+    "AdminInput auto-switches ind to treatment_coverage when switching to kelurahan basis if current ind is not in {TC, Penemuan RO}. Correct and prevents 'no rows' state.",
+    "IndicatorDetail auto-switches filter.unitType from kelurahan -> faskes when visiting a non-kelurahan indicator; prevents empty tabs. Good."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (33/33 pytest)", "frontend": "100% of requested flows"},
+  "test_credentials": "Admin gilangramadhan.zh1@gmail.com / Sukabumi2026! (verified working).",
+  "seed_data_creation": "Documents year=2099 used for backend TestDocuments isolation; each test cleans up its own doc. UI test uploaded TEST_ui_upload.csv on treatment_coverage/2026 and deleted it in the same run. One residual pre-existing doc 'test.csv' on treatment_coverage/2026 from main-agent's earlier curl verification was left intact (not created by this iteration).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 3 new features verified end-to-end. Backend pytest suite at /app/backend/tests/backend_test.py now has 33 tests including new TestIndicatorFiltering and TestDocuments classes. If re-running document upload tests the storage backend (Emergent Object Storage) is real and writes under {APP_NAME}/documents/{indicator}/{year}/{uuid}.{ext}. For UI dropdowns note that shadcn/radix Select is NOT a native <select>; use click + role='option' pattern (see /app/test_reports/iteration_2 playwright scripts). There is one leftover document 'test.csv' on indicator=treatment_coverage year=2026 from previous main-agent manual verification — safe to ignore or delete via admin UI."
+}

@@ -58,7 +58,7 @@ class TestPublic:
         assert len(r.json()) >= 25
 
     def test_summary(self, session):
-        r = session.get(f"{API}/summary", params={"year": 2025, "unit_type": "kelurahan", "period_type": "tahunan", "period_index": 1})
+        r = session.get(f"{API}/summary", params={"year": 2025, "unit_type": "faskes", "period_type": "tahunan", "period_index": 1})
         assert r.status_code == 200
         assert len(r.json()) == 12
 
@@ -234,3 +234,118 @@ class TestValidation:
     def test_bad_month_index(self, session):
         r = session.get(f"{API}/report", params={"indicator": "spm_terduga", "year": 2025, "period_type": "bulan", "period_index": 13})
         assert r.status_code == 400
+
+
+
+# ---------- NEW: Indicator filtering by unit_type ----------
+class TestIndicatorFiltering:
+    """Kelurahan basis only has 2 indicators; faskes has 12."""
+
+    def test_indicators_kelurahan_only_2(self, session):
+        r = session.get(f"{API}/indicators", params={"unit_type": "kelurahan"})
+        assert r.status_code == 200
+        data = r.json()
+        ids = {i["id"] for i in data}
+        assert ids == {"treatment_coverage", "penemuan_kasus_tb_ro"}, f"got {ids}"
+
+    def test_indicators_faskes_12(self, session):
+        r = session.get(f"{API}/indicators", params={"unit_type": "faskes"})
+        assert r.status_code == 200
+        assert len(r.json()) == 12
+
+    def test_summary_kelurahan_only_2(self, session):
+        r = session.get(f"{API}/summary", params={"year": 2026, "unit_type": "kelurahan"})
+        assert r.status_code == 200
+        data = r.json()
+        ids = {i["id"] for i in data}
+        assert ids == {"treatment_coverage", "penemuan_kasus_tb_ro"}, f"got {ids}"
+
+    def test_summary_faskes_12(self, session):
+        r = session.get(f"{API}/summary", params={"year": 2026, "unit_type": "faskes"})
+        assert r.status_code == 200
+        assert len(r.json()) == 12
+
+
+# ---------- NEW: Documents endpoints ----------
+class TestDocuments:
+    """Supporting documents upload/download/delete flow."""
+
+    IND = "treatment_coverage"
+    YEAR = 2099  # isolated
+
+    def test_upload_requires_admin(self, session):
+        files = {"file": ("test.csv", b"a,b\n1,2", "text/csv")}
+        data = {"indicator": self.IND, "year": self.YEAR, "keterangan": "TEST"}
+        r = requests.post(f"{API}/documents", data=data, files=files)
+        assert r.status_code == 401, f"expected 401 got {r.status_code}"
+
+    def test_upload_rejects_txt(self, auth_headers):
+        hdr = {"Authorization": auth_headers["Authorization"]}
+        files = {"file": ("bad.txt", b"nope", "text/plain")}
+        data = {"indicator": self.IND, "year": self.YEAR, "keterangan": "TEST"}
+        r = requests.post(f"{API}/documents", data=data, files=files, headers=hdr)
+        assert r.status_code == 400
+
+    def test_upload_rejects_png(self, auth_headers):
+        hdr = {"Authorization": auth_headers["Authorization"]}
+        files = {"file": ("bad.png", b"\x89PNG\r\n", "image/png")}
+        data = {"indicator": self.IND, "year": self.YEAR, "keterangan": "TEST"}
+        r = requests.post(f"{API}/documents", data=data, files=files, headers=hdr)
+        assert r.status_code == 400
+
+    def test_full_flow_csv(self, auth_headers):
+        hdr = {"Authorization": auth_headers["Authorization"]}
+        content = b"col1,col2\nTEST_a,TEST_b\n"
+        files = {"file": ("TEST_doc.csv", content, "text/csv")}
+        data = {"indicator": self.IND, "year": self.YEAR, "keterangan": "TEST_pytest"}
+        # Upload
+        up = requests.post(f"{API}/documents", data=data, files=files, headers=hdr)
+        assert up.status_code == 200, f"upload failed: {up.status_code} {up.text}"
+        d = up.json()
+        doc_id = d["id"]
+        assert d["filename"] == "TEST_doc.csv"
+        assert d["size"] == len(content)
+        assert d["content_type"] == "text/csv"
+
+        # Listed publicly
+        lst = requests.get(f"{API}/documents", params={"indicator": self.IND, "year": self.YEAR})
+        assert lst.status_code == 200
+        assert any(x["id"] == doc_id for x in lst.json())
+
+        # Download public
+        dl = requests.get(f"{API}/documents/{doc_id}/download")
+        assert dl.status_code == 200
+        assert dl.content == content
+        cd = dl.headers.get("Content-Disposition", "")
+        assert "attachment" in cd and "TEST_doc.csv" in cd
+
+        # Non-admin delete rejected
+        del_noauth = requests.delete(f"{API}/documents/{doc_id}")
+        assert del_noauth.status_code == 401
+
+        # Admin delete
+        d2 = requests.delete(f"{API}/documents/{doc_id}", headers=hdr)
+        assert d2.status_code == 200
+
+        # Gone from list
+        lst2 = requests.get(f"{API}/documents", params={"indicator": self.IND, "year": self.YEAR})
+        assert not any(x["id"] == doc_id for x in lst2.json())
+
+        # Download of deleted -> 404
+        dl2 = requests.get(f"{API}/documents/{doc_id}/download")
+        assert dl2.status_code == 404
+
+        # Delete again -> 404
+        d3 = requests.delete(f"{API}/documents/{doc_id}", headers=hdr)
+        assert d3.status_code == 404
+
+    def test_upload_pdf_ok(self, auth_headers):
+        hdr = {"Authorization": auth_headers["Authorization"]}
+        content = b"%PDF-1.4\n%TEST\n"
+        files = {"file": ("TEST_doc.pdf", content, "application/pdf")}
+        data = {"indicator": self.IND, "year": self.YEAR, "keterangan": "TEST_pdf"}
+        up = requests.post(f"{API}/documents", data=data, files=files, headers=hdr)
+        assert up.status_code == 200
+        doc_id = up.json()["id"]
+        # Cleanup
+        requests.delete(f"{API}/documents/{doc_id}", headers=hdr)
