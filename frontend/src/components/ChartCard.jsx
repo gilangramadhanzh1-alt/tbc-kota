@@ -3,7 +3,7 @@ import { toPng } from "html-to-image";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ChartCard({ title, subtitle, filename, children, testid }) {
+export default function ChartCard({ title, subtitle, filename, children, testid, height }) {
   const ref = useRef(null);
   const download = async () => {
     try {
@@ -27,7 +27,7 @@ export default function ChartCard({ title, subtitle, filename, children, testid 
       <div ref={ref} className="px-5 pb-5 pt-1 bg-white">
         <h3 className="font-heading font-semibold text-slate-900">{title}</h3>
         {subtitle && <p className="text-xs text-slate-500 mb-4">{subtitle}</p>}
-        <div className="h-[320px]">{children}</div>
+        <div className={height === "auto" ? "" : "h-[320px]"}>{children}</div>
       </div>
     </div>
   );

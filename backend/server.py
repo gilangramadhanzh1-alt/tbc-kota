@@ -112,6 +112,17 @@ class LoginIn(BaseModel):
     password: str
 
 
+class AdminIn(BaseModel):
+    email: str = Field(min_length=5)
+    name: str = Field(min_length=1)
+    password: str = Field(min_length=8)
+
+
+class PasswordIn(BaseModel):
+    old_password: str
+    new_password: str = Field(min_length=8)
+
+
 def hash_password(p): return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
 def verify_password(p, h): return bcrypt.checkpw(p.encode(), h.encode())
 
@@ -135,9 +146,9 @@ async def current_admin(request: Request):
     except jwt.InvalidTokenError:
         raise HTTPException(401, "Token tidak valid")
     user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-    if not user or user.get("role") != "admin":
+    if not user or user.get("role") != "admin" or user.get("is_active") is False:
         raise HTTPException(401, "Akses ditolak")
-    return {"id": str(user["_id"]), "email": user["email"], "name": user.get("name"), "role": user["role"]}
+    return {"id": str(user["_id"]), "email": user["email"], "name": user.get("name"), "role": user["role"], "is_owner": user["email"] == os.environ["ADMIN_EMAIL"].lower()}
 
 
 def period_months(ptype: str, idx: int) -> List[int]:
@@ -205,7 +216,7 @@ async def login(body: LoginIn, request: Request, response: Response):
     if att and att.get("count", 0) >= 5 and att.get("locked_until") and att["locked_until"].replace(tzinfo=timezone.utc) > now:
         raise HTTPException(429, "Terlalu banyak percobaan. Coba lagi dalam 15 menit.")
     user = await db.users.find_one({"email": email})
-    if not user or not verify_password(body.password, user["password_hash"]):
+    if not user or user.get("is_active") is False or not verify_password(body.password, user["password_hash"]):
         count = (att.get("count", 0) if att else 0) + 1
         await db.login_attempts.update_one({"identifier": ident}, {"$set": {"count": count, "locked_until": now + timedelta(minutes=15) if count >= 5 else None}}, upsert=True)
         raise HTTPException(401, "Email atau password salah")
@@ -223,6 +234,58 @@ async def logout(response: Response):
 
 @api.get("/auth/me")
 async def me(user=Depends(current_admin)): return user
+
+
+def admin_out(u):
+    return {"id": str(u["_id"]), "email": u["email"], "name": u.get("name"), "is_active": u.get("is_active", True),
+            "is_owner": u["email"] == os.environ["ADMIN_EMAIL"].lower(), "created_at": u.get("created_at")}
+
+
+@api.get("/admins")
+async def list_admins(_=Depends(current_admin)):
+    return [admin_out(u) for u in await db.users.find({"role": "admin"}).sort("created_at", 1).to_list(200)]
+
+
+@api.post("/admins")
+async def create_admin(body: AdminIn, _=Depends(current_admin)):
+    email = body.email.strip().lower()
+    if "@" not in email: raise HTTPException(400, "Email tidak valid")
+    if await db.users.find_one({"email": email}): raise HTTPException(400, "Email sudah terdaftar")
+    doc = {"email": email, "password_hash": hash_password(body.password), "name": body.name.strip(), "role": "admin", "is_active": True, "created_at": datetime.now(timezone.utc)}
+    r = await db.users.insert_one(doc)
+    doc["_id"] = r.inserted_id
+    return admin_out(doc)
+
+
+@api.patch("/admins/{uid}/active")
+async def toggle_admin(uid: str, user=Depends(current_admin)):
+    if not ObjectId.is_valid(uid): raise HTTPException(404, "Admin tidak ditemukan")
+    target = await db.users.find_one({"_id": ObjectId(uid), "role": "admin"})
+    if not target: raise HTTPException(404, "Admin tidak ditemukan")
+    if target["email"] == os.environ["ADMIN_EMAIL"].lower(): raise HTTPException(400, "Admin utama tidak dapat dinonaktifkan")
+    if str(target["_id"]) == user["id"]: raise HTTPException(400, "Tidak dapat menonaktifkan akun sendiri")
+    new = not target.get("is_active", True)
+    await db.users.update_one({"_id": target["_id"]}, {"$set": {"is_active": new}})
+    return {"ok": True, "is_active": new}
+
+
+@api.delete("/admins/{uid}")
+async def delete_admin(uid: str, user=Depends(current_admin)):
+    if not ObjectId.is_valid(uid): raise HTTPException(404, "Admin tidak ditemukan")
+    target = await db.users.find_one({"_id": ObjectId(uid), "role": "admin"})
+    if not target: raise HTTPException(404, "Admin tidak ditemukan")
+    if target["email"] == os.environ["ADMIN_EMAIL"].lower(): raise HTTPException(400, "Admin utama tidak dapat dihapus")
+    if str(target["_id"]) == user["id"]: raise HTTPException(400, "Tidak dapat menghapus akun sendiri")
+    await db.users.delete_one({"_id": target["_id"]})
+    return {"ok": True}
+
+
+@api.put("/auth/password")
+async def change_password(body: PasswordIn, user=Depends(current_admin)):
+    u = await db.users.find_one({"_id": ObjectId(user["id"])})
+    if not verify_password(body.old_password, u["password_hash"]): raise HTTPException(400, "Password lama salah")
+    await db.users.update_one({"_id": u["_id"]}, {"$set": {"password_hash": hash_password(body.new_password)}})
+    return {"ok": True}
 
 
 @api.get("/indicators")

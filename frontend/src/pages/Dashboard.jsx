@@ -11,7 +11,13 @@ import { statusColor } from "@/components/StatusPill";
 import { fmt, fmtPct, periodLabel, status } from "@/lib/period";
 import { exportSummaryExcel } from "@/lib/exportExcel";
 
-function KpiCard({ d, i, noTarget, year }) {
+function Delta({ now, before, pct: isPct, year, id }) {
+  const d = now - (before || 0);
+  const cls = d > 0 ? "text-emerald-600" : d < 0 ? "text-rose-600" : "text-slate-400";
+  return <span className={`font-mono text-[11px] ${cls}`} data-testid={`indicator-card-${id}-delta`}>{d > 0 ? "+" : ""}{isPct ? `${Number(d).toLocaleString("id-ID", { maximumFractionDigits: 1 })} poin` : fmt(d)} vs {year - 1}</span>;
+}
+
+function KpiCard({ d, i, noTarget, year, prev }) {
   const s = status(d.capaian_persen, d.target_persen, d.target_angka);
   const w = Math.min(100, d.capaian_persen);
   if (noTarget) return (
@@ -22,7 +28,7 @@ function KpiCard({ d, i, noTarget, year }) {
       </div>
       <div className="mt-3 text-sm font-medium text-slate-700 min-h-[40px]">{d.no}. {d.name}</div>
       <div className="mt-2 font-mono text-3xl font-bold tracking-tight text-slate-900" data-testid={`indicator-card-${d.id}-angka`}>{fmt(d.capaian_angka)}</div>
-      <div className="mt-2 text-[11px] text-slate-500">Total capaian kota (kasus)</div>
+      <div className="mt-2 text-[11px] text-slate-500 flex justify-between"><span>Total capaian kota (kasus)</span><Delta now={d.capaian_angka} before={prev?.capaian_angka} year={year} id={d.id} /></div>
     </Link>
   );
   return (
@@ -32,8 +38,9 @@ function KpiCard({ d, i, noTarget, year }) {
         <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-slate-900 transition-colors" />
       </div>
       <div className="mt-3 text-sm font-medium text-slate-700 min-h-[40px]">{d.no}. {d.name}</div>
-      <div className="mt-2 flex items-baseline gap-2">
+      <div className="mt-2 flex items-baseline justify-between gap-2">
         <span className="font-mono text-3xl font-bold tracking-tight" style={{ color: statusColor(s) === "#94A3B8" ? "#0F172A" : statusColor(s) }} data-testid={`indicator-card-${d.id}-persen`}>{fmtPct(d.capaian_persen)}</span>
+        <Delta now={d.capaian_persen} before={prev?.capaian_persen} pct year={year} id={d.id} />
       </div>
       <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${w}%`, background: statusColor(s) }} /></div>
       <div className="mt-2 flex justify-between text-[11px] text-slate-500 font-mono">
@@ -50,11 +57,14 @@ function KpiCard({ d, i, noTarget, year }) {
 export default function Dashboard() {
   const { filter } = useFilter();
   const [data, setData] = useState([]);
+  const [prev, setPrev] = useState({});
   const unitLabel = filter.unitType === "kelurahan" ? "Kelurahan" : "Faskes";
   const period = periodLabel(filter.periodType, filter.periodIndex, filter.year);
 
   useEffect(() => {
-    api.get("/summary", { params: { year: filter.year, unit_type: filter.unitType, period_type: filter.periodType, period_index: filter.periodIndex } }).then((r) => setData(r.data));
+    const p = { unit_type: filter.unitType, period_type: filter.periodType, period_index: filter.periodIndex };
+    api.get("/summary", { params: { year: filter.year, ...p } }).then((r) => setData(r.data));
+    api.get("/summary", { params: { year: filter.year - 1, ...p } }).then((r) => setPrev(Object.fromEntries(r.data.map((d) => [d.id, d])))).catch(() => setPrev({}));
   }, [filter]);
 
   const noTarget = filter.unitType === "kelurahan";
@@ -74,7 +84,7 @@ export default function Dashboard() {
       </header>
       <PeriodFilter />
       <section className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="kpi-grid">
-        {data.map((d, i) => <KpiCard key={d.id} d={d} i={i} noTarget={noTarget} year={filter.year} />)}
+        {data.map((d, i) => <KpiCard key={d.id} d={d} i={i} noTarget={noTarget} year={filter.year} prev={prev[d.id]} />)}
       </section>
       {noTarget && <p className="text-xs text-slate-500 -mt-4" data-testid="kelurahan-note">Basis kelurahan tidak memiliki target; hanya menampilkan capaian angka untuk Treatment Coverage dan Penemuan Kasus TB RO.</p>}
       <ChartCard testid="chart-summary" title={noTarget ? "Capaian (Angka) per Indikator" : "Capaian (%) per Indikator"} subtitle={`${period} · ${unitLabel}`} filename={`Rekap_Capaian_${period.replace(/\s+/g, "_")}`}>

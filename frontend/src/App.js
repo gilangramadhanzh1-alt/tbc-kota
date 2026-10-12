@@ -5,6 +5,8 @@ import { AppProviders, useAuth } from "@/context/AppContext";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import IndicatorDetail from "@/pages/IndicatorDetail";
+import PetaKelurahan from "@/pages/PetaKelurahan";
+import AdminUsers from "@/pages/AdminUsers";
 import Login from "@/pages/Login";
 import AdminInput from "@/pages/AdminInput";
 import AdminMaster from "@/pages/AdminMaster";
@@ -26,8 +28,10 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/indikator/:id" element={<IndicatorDetail />} />
+              <Route path="/peta" element={<PetaKelurahan />} />
               <Route path="/admin/input" element={<Protected><AdminInput /></Protected>} />
               <Route path="/admin/master" element={<Protected><AdminMaster /></Protected>} />
+              <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
             </Route>
           </Routes>
         </BrowserRouter>

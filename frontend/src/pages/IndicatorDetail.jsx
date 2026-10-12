@@ -22,11 +22,17 @@ function Stat({ label, value, testid, accent }) {
   );
 }
 
+export function DeltaText({ delta, prev }) {
+  const cls = delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-600" : "text-slate-400";
+  return <span className={cls}>{delta > 0 ? "+" : ""}{fmt(delta)}<span className="text-xs font-normal text-slate-400 ml-1">dari {fmt(prev)}</span></span>;
+}
+
 export default function IndicatorDetail() {
   const { id } = useParams();
   const { filter, setFilter } = useFilter();
   const [rep, setRep] = useState(null);
   const [trend, setTrend] = useState([]);
+  const [prev, setPrev] = useState([]);
   const unitLabel = filter.unitType === "kelurahan" ? "Kelurahan" : "Faskes";
   const noTarget = filter.unitType === "kelurahan";
   const kelurahanAllowed = ["treatment_coverage", "penemuan_kasus_tb_ro"].includes(id);
@@ -39,12 +45,16 @@ export default function IndicatorDetail() {
   useEffect(() => {
     api.get("/report", { params: { indicator: id, year: filter.year, unit_type: filter.unitType, period_type: filter.periodType, period_index: filter.periodIndex } }).then((r) => setRep(r.data));
     api.get("/trend", { params: { indicator: id, year: filter.year, unit_type: filter.unitType } }).then((r) => setTrend(r.data.map((t) => ({ ...t, bulan: MONTHS_SHORT[t.month - 1] }))));
+    api.get("/trend", { params: { indicator: id, year: filter.year - 1, unit_type: filter.unitType } }).then((r) => setPrev(r.data.map((t) => t.kumulatif))).catch(() => setPrev([]));
   }, [id, filter]);
 
   if (!rep) return <div className="text-slate-500" data-testid="detail-loading">Memuat data...</div>;
   const { indicator, rows, total } = rep;
   const short = (n) => n.replace(/^KELURAHAN\s+/i, "").replace(/^PUSKESMAS\s+/i, "PKM ");
   const barData = rows.map((r) => ({ name: r.luar_kota ? "LUAR KOTA" : short(r.unit_name), Target: r.luar_kota ? undefined : r.target_angka, Capaian: r.capaian_angka }));
+  const trendData = trend.map((t, i) => ({ ...t, kumulatif_lalu: prev[i] ?? 0 }));
+  const prevTotal = prev[11] || 0;
+  const delta = total.capaian_angka - prevTotal;
 
   return (
     <div className="space-y-6">
@@ -66,23 +76,25 @@ export default function IndicatorDetail() {
         </TabsList>
       </Tabs>
       {noTarget ? (
-        <section className="grid grid-cols-2 gap-3">
+        <section className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <Stat label="Total Capaian Angka Kota" value={fmt(total.capaian_angka)} testid="stat-capaian-angka" accent="text-blue-700" />
+          <Stat label={`vs Tahun ${filter.year - 1}`} value={<DeltaText delta={delta} prev={prevTotal} />} testid="stat-delta" />
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-xs text-slate-500 flex items-center" data-testid="kelurahan-note">Basis kelurahan tidak memiliki target, hanya capaian angka yang ditampilkan.</div>
         </section>
       ) : (
-      <section className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+      <section className="grid grid-cols-2 lg:grid-cols-7 gap-3">
         <Stat label={`Target Kota ${filter.year}`} value={fmt(total.target_tahunan)} testid="stat-target-kota" accent="text-blue-900" />
         <Stat label="Target Periode" value={fmt(total.target_angka)} testid="stat-target-angka" />
         <Stat label="Target %" value={fmtPct(total.target_persen)} testid="stat-target-persen" />
         <Stat label="Total Capaian Angka" value={fmt(total.capaian_angka)} testid="stat-capaian-angka" accent="text-blue-700" />
         <Stat label="Total Capaian %" value={fmtPct(total.capaian_persen)} testid="stat-capaian-persen" accent="text-blue-700" />
+        <Stat label={`vs Tahun ${filter.year - 1}`} value={<DeltaText delta={delta} prev={prevTotal} />} testid="stat-delta" />
         <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col justify-between col-span-2 lg:col-span-1">
           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Status Kota</div>
           <StatusPill capaian={total.capaian_persen} target={total.target_persen} targetAngka={total.target_angka} testid="stat-status" />
         </div>
         {/* Target Kota = jumlah target tahunan seluruh faskes */}
-        <p className="col-span-2 lg:col-span-6 text-[11px] text-slate-500 -mt-1" data-testid="target-kota-note">Target Kota = jumlah target tahunan seluruh faskes. Target Periode = Target Kota × (jumlah bulan ÷ 12). Capaian % = capaian ÷ target periode.</p>
+        <p className="col-span-2 lg:col-span-7 text-[11px] text-slate-500 -mt-1" data-testid="target-kota-note">Target Kota = jumlah target tahunan seluruh faskes. Target Periode = Target Kota × (jumlah bulan ÷ 12). Capaian % = capaian ÷ target periode.</p>
       </section>
       )}
       <div className="grid xl:grid-cols-2 gap-6">
@@ -99,16 +111,17 @@ export default function IndicatorDetail() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard testid="chart-trend" title="Tren Bulanan & Kumulatif" subtitle={`Tahun ${filter.year} · ${unitLabel}`} filename={`${indicator.code}_tren_${filter.year}`}>
+        <ChartCard testid="chart-trend" title="Tren Bulanan & Kumulatif" subtitle={`Tahun ${filter.year} vs ${filter.year - 1} · ${unitLabel}`} filename={`${indicator.code}_tren_${filter.year}`}>
           <ResponsiveContainer>
-            <ComposedChart data={trend} margin={{ left: -15 }}>
+            <ComposedChart data={trendData} margin={{ left: -15 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis dataKey="bulan" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v) => fmt(v)} />
               <Legend verticalAlign="top" height={28} />
               <Bar dataKey="capaian" name="Capaian Bulanan" fill="#D97706" radius={[3, 3, 0, 0]} />
-              <Line dataKey="kumulatif" name="Kumulatif" stroke="#2563EB" strokeWidth={2} dot={{ r: 2 }} />
+              <Line dataKey="kumulatif" name={`Kumulatif ${filter.year}`} stroke="#2563EB" strokeWidth={2} dot={{ r: 2 }} />
+              <Line dataKey="kumulatif_lalu" name={`Kumulatif ${filter.year - 1}`} stroke="#94A3B8" strokeWidth={2} dot={false} data-testid="line-prev-year" />
               {!noTarget && <Line dataKey="target_kumulatif" name="Target Kumulatif" stroke="#0F172A" strokeDasharray="4 4" strokeWidth={2} dot={false} />}
             </ComposedChart>
           </ResponsiveContainer>

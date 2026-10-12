@@ -1,5 +1,5 @@
 import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
-import { Activity, LayoutDashboard, PencilLine, Database, LogIn, LogOut, ChevronRight } from "lucide-react";
+import { Activity, LayoutDashboard, PencilLine, Database, LogIn, LogOut, ChevronRight, Map, Users } from "lucide-react";
 import { useAuth } from "@/context/AppContext";
 
 const linkCls = ({ isActive }) =>
@@ -19,6 +19,7 @@ function Sidebar() {
       </Link>
       <nav className="px-3 py-4 space-y-1 overflow-y-auto flex-1">
         <NavLink to="/" end className={linkCls} data-testid="nav-dashboard"><LayoutDashboard className="h-4 w-4" />Dashboard</NavLink>
+        <NavLink to="/peta" className={linkCls} data-testid="nav-peta"><Map className="h-4 w-4" />Peta Kelurahan</NavLink>
         <div className="pt-4 pb-1 px-3 text-[10px] uppercase tracking-[0.2em] text-slate-500">Indikator</div>
         <div className="grid grid-cols-2 lg:grid-cols-1 gap-0.5">
           {indicators.map((i) => (
@@ -33,6 +34,7 @@ function Sidebar() {
             <div className="pt-4 pb-1 px-3 text-[10px] uppercase tracking-[0.2em] text-slate-500">Admin</div>
             <NavLink to="/admin/input" className={linkCls} data-testid="nav-admin-input"><PencilLine className="h-4 w-4" />Input Data</NavLink>
             <NavLink to="/admin/master" className={linkCls} data-testid="nav-admin-master"><Database className="h-4 w-4" />Kelurahan & Faskes</NavLink>
+            <NavLink to="/admin/users" className={linkCls} data-testid="nav-admin-users"><Users className="h-4 w-4" />Kelola Admin</NavLink>
           </>
         )}
       </nav>

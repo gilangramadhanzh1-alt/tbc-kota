@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Save } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Save, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { api, errMsg } from "@/lib/api";
 import { useAuth } from "@/context/AppContext";
 import { Field, SimpleSelect } from "@/components/PeriodFilter";
 import { MONTHS_SHORT, YEARS, fmt } from "@/lib/period";
+import { downloadInputTemplate, parseInputExcel } from "@/lib/importExcel";
 
 const cell = "w-full min-w-[64px] h-8 px-1.5 text-right font-mono text-xs bg-transparent border border-transparent rounded hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:outline-none";
 const th = "px-2 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap";
@@ -46,6 +47,22 @@ export default function AdminInput() {
   };
 
   const colTotal = (m) => rows.reduce((s, r) => s + r.months[m], 0);
+  const fileRef = useRef();
+  const indName = indicators.find((i) => i.id === ind)?.name || ind;
+  const unitLabel = unitType === "kelurahan" ? "Kelurahan" : "Faskes";
+
+  const importExcel = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const { rows: next, matched, unmatched } = await parseInputExcel(file, rows);
+      if (!matched) { toast.error(`Tidak ada nama ${unitLabel.toLowerCase()} yang cocok di file`); return; }
+      setRows(next); setDirty(true);
+      toast.success(`${matched} baris terisi dari Excel. Klik "Simpan Perubahan" untuk menyimpan.`);
+      if (unmatched.length) toast.warning(`${unmatched.length} baris tidak dikenali: ${unmatched.slice(0, 3).join(", ")}${unmatched.length > 3 ? "…" : ""}`);
+    } catch (err) { toast.error(err.message || "File tidak bisa dibaca"); }
+  };
 
   return (
     <div className="space-y-6">
@@ -55,9 +72,18 @@ export default function AdminInput() {
           <h1 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight mt-1">Input Target & Capaian</h1>
           <p className="text-sm text-slate-500 mt-1">{noTarget ? "Basis kelurahan tanpa target: isi capaian angka per bulan untuk Treatment Coverage dan Penemuan Kasus TB RO." : "Isi target tahunan dan capaian per bulan. Triwulan, semester dan tahunan dihitung otomatis."}</p>
         </div>
-        <button onClick={save} disabled={saving || !dirty} className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-40 transition-colors" data-testid="btn-save-input">
-          <Save className="h-4 w-4" />{saving ? "Menyimpan..." : dirty ? "Simpan Perubahan" : "Tersimpan"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => downloadInputTemplate({ indicatorName: indName, year, unitLabel, rows, noTarget })} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-slate-300 bg-white text-sm font-medium hover:border-slate-900 transition-colors" data-testid="btn-download-template">
+            <Download className="h-4 w-4" />Unduh Template
+          </button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={importExcel} data-testid="import-excel-input" />
+          <button onClick={() => fileRef.current.click()} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 transition-colors" data-testid="btn-import-excel">
+            <Upload className="h-4 w-4" />Import Excel
+          </button>
+          <button onClick={save} disabled={saving || !dirty} className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 disabled:opacity-40 transition-colors" data-testid="btn-save-input">
+            <Save className="h-4 w-4" />{saving ? "Menyimpan..." : dirty ? "Simpan Perubahan" : "Tersimpan"}
+          </button>
+        </div>
       </header>
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-end gap-4">
         <Field label="Indikator"><SimpleSelect testid="input-indicator-select" value={ind} onChange={setInd} options={indOptions.map((i) => ({ value: i.id, label: `${i.no}. ${i.name}` }))} className="min-w-[300px]" /></Field>
