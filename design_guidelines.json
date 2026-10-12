@@ -1,0 +1,155 @@
+{
+  "project_name": "Bank Data Tuberkulosis Kota Sukabumi (SI-BATIK Sukabumi)",
+  "archetype": "High-Density Clinical Precision & Public Health Command Center",
+  "theme": "Light theme primary with high-contrast slate navy structure, warm amber/coral performance accents, and clean tabular data presentation",
+  "language": "Indonesian (ID)",
+  "typography": {
+    "heading_font": "Plus Jakarta Sans, sans-serif",
+    "body_font": "Outfit, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100",
+      "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100",
+      "h3": "text-lg font-medium text-slate-800 dark:text-slate-200",
+      "h4": "text-base font-medium text-slate-700 dark:text-slate-300",
+      "body": "text-sm text-slate-600 dark:text-slate-400 leading-relaxed",
+      "small_label": "text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400",
+      "metric_number": "text-2xl sm:text-3xl font-bold tracking-tight font-mono"
+    }
+  },
+  "colors": {
+    "forbidden_colors": ["#1B93A4", "#7351B7"],
+    "palette": {
+      "primary": "#0F172A",
+      "primary_hover": "#1E293B",
+      "brand_blue": "#2563EB",
+      "accent_amber": "#D97706",
+      "accent_rose": "#E11D48",
+      "accent_emerald": "#16A34A",
+      "neutral_bg": "#F8FAFC",
+      "surface_white": "#FFFFFF",
+      "surface_border": "#E2E8F0",
+      "muted_text": "#64748B",
+      "dark_bg": "#0B0F17",
+      "dark_surface": "#1E293B",
+      "dark_border": "#334155"
+    },
+    "indicator_status": {
+      "target_achieved": "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+      "near_target": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+      "below_target": "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800"
+    }
+  },
+  "layout_and_spacing": {
+    "grid_strategy": "High Density Grid (MODE B) for analytics + strict tabbed table views for Kelurahan / Faskes",
+    "container_padding": "p-4 sm:p-6 lg:p-8",
+    "card_padding": "p-5 sm:p-6",
+    "gap_standard": "gap-4 sm:gap-6",
+    "header_height": "h-16",
+    "responsive_breakpoints": {
+      "mobile": "block w-full",
+      "tablet": "md:grid md:grid-cols-2",
+      "desktop": "lg:grid-cols-4"
+    }
+  },
+  "indicators": [
+    { "id": "spm_terduga", "title": "1. SPM Terduga TBC", "code": "SPM-TB", "category": "Penemuan" },
+    { "id": "treatment_coverage", "title": "2. Treatment Coverage", "code": "TC", "category": "Cakupan" },
+    { "id": "keberhasilan_pengobatan", "title": "3. Keberhasilan Pengobatan", "code": "SR-SO", "category": "Hasil" },
+    { "id": "enrollment_tb_so", "title": "4. Enrollment TB SO", "code": "ENR-SO", "category": "Pengobatan" },
+    { "id": "penemuan_kasus_tb_ro", "title": "5. Penemuan Kasus TB RO", "code": "CASE-RO", "category": "Penemuan" },
+    { "id": "enrollment_tb_ro", "title": "6. Enrollment TB RO", "code": "ENR-RO", "category": "Pengobatan" },
+    { "id": "keberhasilan_tb_ro", "title": "7. Keberhasilan TB RO", "code": "SR-RO", "category": "Hasil" },
+    { "id": "tbc_anak", "title": "8. TBC Anak", "code": "TB-PED", "category": "Khusus" },
+    { "id": "tbc_hiv", "title": "9. TBC HIV", "code": "TB-HIV", "category": "Khusus" },
+    { "id": "tpt", "title": "10. TPT (Terapi Pencegahan TBC)", "code": "TPT", "category": "Pencegahan" },
+    { "id": "ik_bakteriologis", "title": "11. Investigasi Kontak Bakteriologis", "code": "IK-BAKT", "category": "Investigasi" },
+    { "id": "ik_klinis", "title": "12. Investigasi Kontak Klinis", "code": "IK-KLIN", "category": "Investigasi" }
+  ],
+  "data_fields": [
+    { "key": "target_angka", "label": "Target (Angka)", "type": "number", "format": "integer" },
+    { "key": "target_persen", "label": "Target (%)", "type": "percentage", "format": "decimal" },
+    { "key": "capaian_angka", "label": "Capaian (Angka)", "type": "number", "format": "integer" },
+    { "key": "capaian_persen", "label": "Capaian (%)", "type": "percentage", "format": "decimal" },
+    { "key": "total_capaian_angka", "label": "Total Capaian (Angka)", "type": "number", "format": "integer" },
+    { "key": "total_capaian_persen", "label": "Total Capaian (%)", "type": "percentage", "format": "decimal" }
+  ],
+  "components": {
+    "header": {
+      "style": "sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-3.5 flex items-center justify-between",
+      "logo_title": "DINKES KOTA SUKABUMI - BANK DATA TBC",
+      "elements": ["Logo Pemkot/Dinkes", "Title & Subtitle", "Period Selector (Tahun, Month/Triwulan/Semester/Tahunan)", "Dark Mode Toggle", "Admin Login Button / User Profile Pill"]
+    },
+    "filter_bar": {
+      "style": "bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4",
+      "controls": ["Dropdown Tahun (e.g., 2024, 2025, 2026)", "Dropdown Periode (Bulanan, Triwulan T1-T4, Semester S1-S2, Tahunan)", "Dropdown Unit Filter (Semua, Per Kelurahan, Per Faskes)", "Search Query Bar", "Reset Button"]
+    },
+    "kpi_cards": {
+      "style": "bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden",
+      "features": ["Indicator Code Badge", "Target vs Capaian visual progress bar", "Percentage completion pill with dynamic background (Emerald/Amber/Rose)", "Trend indicator vs previous period"]
+    },
+    "data_tables": {
+      "style": "w-full text-left text-sm border-collapse rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
+      "header_style": "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 font-semibold text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-700",
+      "row_style": "hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800/60",
+      "total_row_style": "bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-slate-100 border-t-2 border-slate-300 dark:border-slate-600"
+    },
+    "charts": {
+      "library": "Recharts",
+      "download_feature": "HTML Canvas export to PNG / SVG via button 'Unduh Grafik PNG'",
+      "types": ["BarChart comparison per unit", "LineChart trend over 12 months", "ComposedChart (Capaian Bar + Target Line)"],
+      "styling": "Rounded tooltip with dark glassmorphism, strokeWidth 2, crisp grid lines strokeDasharray 3 3"
+    },
+    "export_actions": {
+      "excel": "Download Excel button using xlsx library (exports current indicator table with summary header)",
+      "png": "Download Chart image button with high DPI canvas capture"
+    },
+    "admin_management": {
+      "modals": ["Login Modal (Username/Password with quick prefill for demo)", "Master Data Kelurahan Modal", "Master Data Faskes Modal"],
+      "input_grid": "Editable spreadsheet-like tabular input for monthly Capaian & annual Targets with batch Save capabilities"
+    }
+  },
+  "image_urls": [
+    {
+      "category": "health_dashboard_header",
+      "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwxfHxoZWFsdGglMjBkYXRhJTIwZGFzaGJvYXJkJTIwYW5hbHl0aWNzJTIwaG9zcGl0YWwlMjBtZWRpY2FsfGVufDB8fHx8MTc5MTc3MDU3MXww&ixlib=rb-4.1.0&q=85",
+      "description": "Health analytics data monitoring dashboard screen"
+    },
+    {
+      "category": "medical_data_bg",
+      "url": "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHwyfHxoZWFsdGglMjBkYXRhJTIwZGFzaGJvYXJkJTIwYW5hbHl0aWNzJTIwaG9zcGl0YWwlMjBtZWRpY2FsfGVufDB8fHx8MTc5MTc3MDU3MXww&ixlib=rb-4.1.0&q=85",
+      "description": "Turned on clinical data monitoring screen"
+    }
+  ],
+  "testing_and_accessibility": {
+    "data_testid_rules": "All interactive elements, buttons, tabs, period filters, search inputs, modal triggers, table rows, export buttons, and target cells MUST include data-testid (kebab-case).",
+    "examples": [
+      "data-testid=\"nav-logo\"",
+      "data-testid=\"filter-tahun-select\"",
+      "data-testid=\"filter-periode-select\"",
+      "data-testid=\"indicator-card-spm_terduga\"",
+      "data-testid=\"tab-kelurahan-view\"",
+      "data-testid=\"tab-faskes-view\"",
+      "data-testid=\"btn-export-excel\"",
+      "data-testid=\"btn-download-chart-png\"",
+      "data-testid=\"admin-login-button\"",
+      "data-testid=\"input-capaian-angka-january\""
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Build a complete, responsive, highly professional Indonesian public health data bank app for TBC Kota Sukabumi.",
+    "Support all 12 indicators accurately with data breakdown by 33 Kelurahan in Kota Sukabumi and key Faskes (Puskesmas Selabatu, Puskesmas Cikole, Puskesmas Tipar, RSUD R. Syamsudin, SH, etc.).",
+    "Implement auto-aggregation logic: Monthly input automatically computes for Triwulan (T1-T4), Semester (S1-S2), and Tahunan.",
+    "Provide clear tabs on indicator detail pages for 'Per Kelurahan' and 'Per Faskes', containing Target Angka, Target %, Capaian Angka, Capaian %, and Total Capaian Angka & % row at the bottom.",
+    "Include export options: Excel export (.xlsx) for tables and downloadable chart images (PNG format using Recharts/Canvas capture).",
+    "Provide Admin Mode toggle with inline grid editing for updating targets and monthly achievements.",
+    "Strictly follow the color palette, typography, high-contrast dark/light mode toggle, and accessibility requirements with explicit data-testid on all interactive elements."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do NOT use dark colors as heavy gradients. Keep background surface clean.",
+    "Never center align the main app container globally.",
+    "Avoid AI slop, default Inter-only fonts for headers, or generic centered layout.",
+    "All interactive elements must have micro-interactions, focus rings, and explicit data-testid attributes.",
+    "Use Lucide react icons or Phosphor icons for clean tabular dashboard controls."
+  ]
+}
