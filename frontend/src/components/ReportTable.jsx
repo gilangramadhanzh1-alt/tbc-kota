@@ -14,8 +14,8 @@ export default function ReportTable({ rows, total, unitLabel, showLinks = false,
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.unit_id || r.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors" data-testid={`report-row-${i}`}>
-              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{r.no || i + 1}</td>
+            <tr key={r.unit_id || r.id} className={`border-b border-slate-100 hover:bg-slate-50/80 transition-colors ${r.luar_kota ? "bg-amber-50/60" : ""}`} data-testid={`report-row-${i}`}>
+              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{r.luar_kota ? "–" : r.no || i + 1}</td>
               <td className="px-3 py-2.5 font-medium text-slate-800">
                 {showLinks ? <Link to={`/indikator/${r.id}`} className="hover:text-blue-600 hover:underline" data-testid={`report-link-${r.id}`}>{r.name}</Link> : r.unit_name || r.name}
               </td>
@@ -49,17 +49,25 @@ export default function ReportTable({ rows, total, unitLabel, showLinks = false,
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.unit_id || r.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors" data-testid={`report-row-${i}`}>
-              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{r.no || i + 1}</td>
+            <tr key={r.unit_id || r.id} className={`border-b border-slate-100 hover:bg-slate-50/80 transition-colors ${r.luar_kota ? "bg-amber-50/60" : ""}`} data-testid={`report-row-${i}`}>
+              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{r.luar_kota ? "–" : r.no || i + 1}</td>
               <td className="px-3 py-2.5 font-medium text-slate-800">
                 {showLinks ? <Link to={`/indikator/${r.id}`} className="hover:text-blue-600 hover:underline" data-testid={`report-link-${r.id}`}>{r.name}</Link> : r.unit_name || r.name}
+                {r.luar_kota && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-amber-700">tanpa target</span>}
               </td>
               {showTargetKota && <td className={`${td} bg-blue-50/40 font-semibold text-blue-900`} data-testid={`report-target-kota-${i}`}>{fmt(r.target_tahunan)}</td>}
-              <td className={td}>{fmt(r.target_angka)}</td>
-              <td className={`${td} text-slate-500`}>{fmtPct(r.target_persen)}</td>
+              {r.luar_kota ? (
+                <><td className={`${td} text-slate-400`}>–</td><td className={`${td} text-slate-400`}>–</td></>
+              ) : (
+                <><td className={td}>{fmt(r.target_angka)}</td><td className={`${td} text-slate-500`}>{fmtPct(r.target_persen)}</td></>
+              )}
               <td className={`${td} font-semibold text-slate-900`}>{fmt(r.capaian_angka)}</td>
-              <td className={`${td} font-semibold`}>{fmtPct(r.capaian_persen)}</td>
-              <td className="px-3 py-2.5"><StatusPill capaian={r.capaian_persen} target={r.target_persen} targetAngka={r.target_angka} testid={`report-status-${i}`} /></td>
+              {r.luar_kota ? (
+                <><td className={`${td} text-slate-400`}>–</td><td className="px-3 py-2.5 text-xs text-slate-400">–</td></>
+              ) : (
+                <><td className={`${td} font-semibold`}>{fmtPct(r.capaian_persen)}</td>
+                <td className="px-3 py-2.5"><StatusPill capaian={r.capaian_persen} target={r.target_persen} targetAngka={r.target_angka} testid={`report-status-${i}`} /></td></>
+              )}
             </tr>
           ))}
         </tbody>

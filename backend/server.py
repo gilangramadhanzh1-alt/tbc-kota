@@ -44,6 +44,8 @@ INDICATORS = [
 ]
 INDICATOR_IDS = {i["id"] for i in INDICATORS}
 KELURAHAN_INDICATORS = {"treatment_coverage", "penemuan_kasus_tb_ro"}
+LUAR_KOTA_INDICATORS = {"treatment_coverage", "penemuan_kasus_tb_ro"}
+LUAR_KOTA_ID = "luar_kota"
 
 
 def indicators_for(unit_type):
@@ -178,6 +180,11 @@ async def build_report(indicator, year, unit_type, months):
                      "tercapai": tgt > 0 and cp >= tp})
         tot_t += tgt; tot_c += c; tot_annual += annual
         if annual: tp_list.append(tp)
+    if indicator in LUAR_KOTA_INDICATORS:
+        c = cap.get(LUAR_KOTA_ID, 0)
+        rows.append({"unit_id": LUAR_KOTA_ID, "unit_name": "LUAR KOTA", "target_tahunan": 0, "target_angka": 0,
+                     "target_persen": 0, "capaian_angka": c, "capaian_persen": 0, "tercapai": False, "luar_kota": True})
+        tot_c += c
     total_tp = round(sum(tp_list) / len(tp_list), 2) if tp_list else 100
     total = {"target_tahunan": tot_annual, "target_angka": round(tot_t, 2), "target_persen": total_tp,
              "capaian_angka": tot_c, "capaian_persen": pct(tot_c, tot_t)}
@@ -279,6 +286,7 @@ async def trend(indicator: str, year: int, unit_type: UnitType = "kelurahan"):
     check_indicator(indicator)
     unit_ids = [str(u["_id"]) for u in await db.units.find({"type": unit_type}, {"_id": 1}).to_list(500)]
     annual = sum(t.get("target_angka", 0) for t in await db.targets.find({"indicator": indicator, "year": year, "unit_id": {"$in": unit_ids}}).to_list(1000))
+    if indicator in LUAR_KOTA_INDICATORS: unit_ids.append(LUAR_KOTA_ID)
     monthly = [0.0] * 12
     async for c in db.capaian.find({"indicator": indicator, "year": year, "unit_id": {"$in": unit_ids}}):
         monthly[c["month"] - 1] += c["value"]
@@ -298,10 +306,13 @@ async def get_input(indicator: str, year: int, unit_type: UnitType, _=Depends(cu
     caps = {}
     async for c in db.capaian.find({"indicator": indicator, "year": year}):
         caps.setdefault(c["unit_id"], [0] * 12)[c["month"] - 1] = c["value"]
-    return [{"unit_id": u.id, "unit_name": u.name,
+    rows = [{"unit_id": u.id, "unit_name": u.name,
              "target_angka": targets.get(u.id, {}).get("target_angka", 0),
              "target_persen": targets.get(u.id, {}).get("target_persen", 100),
              "months": caps.get(u.id, [0] * 12)} for u in units]
+    if indicator in LUAR_KOTA_INDICATORS:
+        rows.append({"unit_id": LUAR_KOTA_ID, "unit_name": "LUAR KOTA", "target_angka": 0, "target_persen": 0, "months": caps.get(LUAR_KOTA_ID, [0] * 12), "luar_kota": True})
+    return rows
 
 
 @api.put("/input")
@@ -310,7 +321,9 @@ async def save_input(body: InputPayload, _=Depends(current_admin)):
     now = datetime.now(timezone.utc).isoformat()
     for r in body.rows:
         key = {"indicator": body.indicator, "year": body.year, "unit_id": r.unit_id}
-        await db.targets.update_one(key, {"$set": {"target_angka": r.target_angka, "target_persen": r.target_persen, "updated_at": now}}, upsert=True)
+        if r.unit_id == LUAR_KOTA_ID and body.indicator not in LUAR_KOTA_INDICATORS: raise HTTPException(400, "Indikator ini tidak memiliki data luar kota")
+        if r.unit_id != LUAR_KOTA_ID:
+            await db.targets.update_one(key, {"$set": {"target_angka": r.target_angka, "target_persen": r.target_persen, "updated_at": now}}, upsert=True)
         for i, v in enumerate(r.months):
             if v < 0: raise HTTPException(400, "Capaian tidak boleh negatif")
             await db.capaian.update_one({**key, "month": i + 1}, {"$set": {"value": v, "updated_at": now}}, upsert=True)

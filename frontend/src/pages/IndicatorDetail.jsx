@@ -44,7 +44,7 @@ export default function IndicatorDetail() {
   if (!rep) return <div className="text-slate-500" data-testid="detail-loading">Memuat data...</div>;
   const { indicator, rows, total } = rep;
   const short = (n) => n.replace(/^KELURAHAN\s+/i, "").replace(/^PUSKESMAS\s+/i, "PKM ");
-  const barData = rows.map((r) => ({ name: short(r.unit_name), Target: r.target_angka, Capaian: r.capaian_angka }));
+  const barData = rows.map((r) => ({ name: r.luar_kota ? "LUAR KOTA" : short(r.unit_name), Target: r.luar_kota ? undefined : r.target_angka, Capaian: r.capaian_angka }));
 
   return (
     <div className="space-y-6">

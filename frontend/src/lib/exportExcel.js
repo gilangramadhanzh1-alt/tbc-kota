@@ -8,7 +8,7 @@ export function exportReportExcel({ indicator, unitLabel, period, rows, total, n
     [],
     noTarget ? ["No", unitLabel, "Capaian Angka"] : ["No", unitLabel, "Target Tahunan", "Target Angka (Periode)", "Target %", "Capaian Angka", "Capaian %", "Status"],
   ];
-  const body = rows.map((r, i) => noTarget ? [i + 1, r.unit_name, r.capaian_angka] : [i + 1, r.unit_name, r.target_tahunan, r.target_angka, r.target_persen, r.capaian_angka, r.capaian_persen, r.target_angka ? (r.tercapai ? "Tercapai" : "Belum Tercapai") : "-"]);
+  const body = rows.map((r, i) => noTarget ? [r.luar_kota ? "-" : i + 1, r.unit_name, r.capaian_angka] : r.luar_kota ? ["-", r.unit_name + " (tanpa target)", "-", "-", "-", r.capaian_angka, "-", "-"] : [i + 1, r.unit_name, r.target_tahunan, r.target_angka, r.target_persen, r.capaian_angka, r.capaian_persen, r.target_angka ? (r.tercapai ? "Tercapai" : "Belum Tercapai") : "-"]);
   const foot = [noTarget ? ["", "TOTAL CAPAIAN", total.capaian_angka] : ["", "TARGET KOTA / TOTAL CAPAIAN", total.target_tahunan, total.target_angka, total.target_persen, total.capaian_angka, total.capaian_persen, total.tercapai ? "Tercapai" : "Belum Tercapai"]];
   const ws = XLSX.utils.aoa_to_sheet([...header, ...body, ...foot]);
   ws["!cols"] = [{ wch: 5 }, { wch: 34 }, { wch: 14 }, { wch: 20 }, { wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 16 }];

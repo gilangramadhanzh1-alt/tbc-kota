@@ -77,10 +77,10 @@ export default function AdminInput() {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.unit_id} className="border-b border-slate-100 hover:bg-slate-50/60" data-testid={`input-row-${i}`}>
-                <td className="px-2 py-1 text-xs font-medium sticky left-0 bg-white">{r.unit_name}</td>
-                {!noTarget && <td className="px-1 bg-blue-50/40"><input type="number" min="0" className={cell} value={r.target_angka} onChange={(e) => update(i, "target_angka", e.target.value)} data-testid={`input-target-angka-${i}`} /></td>}
-                {!noTarget && <td className="px-1 bg-blue-50/40"><input type="number" min="0" className={cell} value={r.target_persen} onChange={(e) => update(i, "target_persen", e.target.value)} data-testid={`input-target-persen-${i}`} /></td>}
+              <tr key={r.unit_id} className={`border-b border-slate-100 hover:bg-slate-50/60 ${r.luar_kota ? "bg-amber-50/70" : ""}`} data-testid={`input-row-${i}`}>
+                <td className="px-2 py-1 text-xs font-medium sticky left-0 bg-white">{r.unit_name}{r.luar_kota && <span className="ml-2 text-[9px] font-semibold uppercase tracking-wider text-amber-700">tanpa target</span>}</td>
+                {!noTarget && <td className="px-1 bg-blue-50/40">{r.luar_kota ? <span className="block text-center text-slate-400 text-xs">–</span> : <input type="number" min="0" className={cell} value={r.target_angka} onChange={(e) => update(i, "target_angka", e.target.value)} data-testid={`input-target-angka-${i}`} />}</td>}
+                {!noTarget && <td className="px-1 bg-blue-50/40">{r.luar_kota ? <span className="block text-center text-slate-400 text-xs">–</span> : <input type="number" min="0" className={cell} value={r.target_persen} onChange={(e) => update(i, "target_persen", e.target.value)} data-testid={`input-target-persen-${i}`} />}</td>}
                 {r.months.map((v, m) => (
                   <td key={m} className="px-1"><input type="number" min="0" className={cell} value={v} onChange={(e) => update(i, "months", e.target.value, m)} data-testid={`input-capaian-${i}-${m + 1}`} /></td>
                 ))}
