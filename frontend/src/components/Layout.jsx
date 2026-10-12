@@ -13,7 +13,7 @@ function Sidebar() {
       <Link to="/" className="px-6 py-6 flex items-center gap-3 border-b border-white/10" data-testid="nav-logo">
         <div className="h-10 w-10 rounded-lg bg-amber-500 grid place-items-center"><Activity className="h-5 w-5 text-slate-900" /></div>
         <div>
-          <div className="font-heading font-extrabold tracking-tight leading-tight">BANK DATA TBC</div>
+          <div className="font-heading font-extrabold tracking-tight leading-tight">DATA TBC KOTA SUKABUMI</div>
           <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Kota Sukabumi</div>
         </div>
       </Link>

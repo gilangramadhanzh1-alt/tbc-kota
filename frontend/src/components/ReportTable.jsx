@@ -5,7 +5,33 @@ import StatusPill from "@/components/StatusPill";
 const th = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap";
 const td = "px-3 py-2.5 font-mono text-right whitespace-nowrap";
 
-export default function ReportTable({ rows, total, unitLabel, showLinks = false }) {
+export default function ReportTable({ rows, total, unitLabel, showLinks = false, noTarget = false }) {
+  if (noTarget) return (
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white" data-testid="report-table">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 border-b border-slate-200">
+          <tr><th className={`${th} text-left w-10`}>No</th><th className={`${th} text-left`}>{unitLabel}</th><th className={`${th} text-right`}>Capaian Angka</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.unit_id || r.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors" data-testid={`report-row-${i}`}>
+              <td className="px-3 py-2.5 text-slate-400 font-mono text-xs">{r.no || i + 1}</td>
+              <td className="px-3 py-2.5 font-medium text-slate-800">
+                {showLinks ? <Link to={`/indikator/${r.id}`} className="hover:text-blue-600 hover:underline" data-testid={`report-link-${r.id}`}>{r.name}</Link> : r.unit_name || r.name}
+              </td>
+              <td className={`${td} font-semibold text-slate-900`}>{fmt(r.capaian_angka)}</td>
+            </tr>
+          ))}
+        </tbody>
+        {total && (
+          <tfoot><tr className="bg-slate-900 text-white" data-testid="report-total-row">
+            <td /><td className="px-3 py-3 font-heading font-bold text-xs uppercase tracking-wider">Total Capaian Kota</td>
+            <td className={`${td} font-bold text-amber-300`} data-testid="total-capaian-angka">{fmt(total.capaian_angka)}</td>
+          </tr></tfoot>
+        )}
+      </table>
+    </div>
+  );
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white" data-testid="report-table">
       <table className="w-full text-sm">

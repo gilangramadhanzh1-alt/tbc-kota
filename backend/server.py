@@ -12,7 +12,11 @@ from typing import List, Optional, Literal, Annotated
 import bcrypt
 import jwt
 from bson import ObjectId
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query, UploadFile, File, Form
+from fastapi.concurrency import run_in_threadpool
+import uuid
+from urllib.parse import quote
+from storage import init_storage, put_object, get_object, APP_NAME
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, BeforeValidator, ConfigDict
 from starlette.middleware.cors import CORSMiddleware
@@ -39,6 +43,11 @@ INDICATORS = [
     {"id": "ik_klinis", "no": 12, "name": "Investigasi Kontak Klinis", "code": "IK-KLIN"},
 ]
 INDICATOR_IDS = {i["id"] for i in INDICATORS}
+KELURAHAN_INDICATORS = {"treatment_coverage", "penemuan_kasus_tb_ro"}
+
+
+def indicators_for(unit_type):
+    return [i for i in INDICATORS if unit_type == "faskes" or i["id"] in KELURAHAN_INDICATORS]
 
 KELURAHAN = ["JAYAKARSA", "BAROS", "JAYA MEKAR", "SUDAJAYA HILIR", "BENTENG", "DAYEUHLUHUR", "CIBEUREUM HILIR",
              "BABAKAN", "CIKUNDUL", "CIPANENGAH", "SINDANG SARI", "GUNUNG PUYUH", "SRIWIDARI", "CITAMIANG",
@@ -177,7 +186,7 @@ async def build_report(indicator, year, unit_type, months):
 
 
 @api.get("/")
-async def root(): return {"message": "Bank Data TBC Kota Sukabumi"}
+async def root(): return {"message": "Data TBC Kota Sukabumi"}
 
 
 @api.post("/auth/login")
@@ -210,7 +219,7 @@ async def me(user=Depends(current_admin)): return user
 
 
 @api.get("/indicators")
-async def indicators(): return INDICATORS
+async def indicators(unit_type: Optional[UnitType] = None): return indicators_for(unit_type or "faskes")
 
 
 @api.get("/units")
@@ -259,7 +268,7 @@ async def report(indicator: str, year: int, unit_type: UnitType = "kelurahan",
 async def summary(year: int, unit_type: UnitType = "kelurahan", period_type: PeriodType = "tahunan", period_index: int = 1):
     months = period_months(period_type, period_index)
     out = []
-    for ind in INDICATORS:
+    for ind in indicators_for(unit_type):
         _, total = await build_report(ind["id"], year, unit_type, months)
         out.append({**ind, **total})
     return out
@@ -308,6 +317,69 @@ async def save_input(body: InputPayload, _=Depends(current_admin)):
     return {"ok": True, "saved": len(body.rows)}
 
 
+ALLOWED_DOCS = {
+    "pdf": "application/pdf",
+    "xls": "application/vnd.ms-excel",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "csv": "text/csv",
+}
+MAX_DOC_BYTES = 15 * 1024 * 1024
+
+
+def doc_out(d):
+    return {"id": str(d["_id"]), "indicator": d["indicator"], "year": d["year"], "filename": d["filename"],
+            "content_type": d["content_type"], "size": d["size"], "keterangan": d.get("keterangan", ""), "created_at": d["created_at"]}
+
+
+@api.get("/documents")
+async def list_documents(indicator: str, year: int):
+    check_indicator(indicator)
+    docs = await db.documents.find({"indicator": indicator, "year": year, "is_deleted": False}).sort("created_at", -1).to_list(500)
+    return [doc_out(d) for d in docs]
+
+
+@api.post("/documents")
+async def upload_document(indicator: str = Form(...), year: int = Form(...), keterangan: str = Form(""),
+                          file: UploadFile = File(...), _=Depends(current_admin)):
+    check_indicator(indicator)
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in ALLOWED_DOCS: raise HTTPException(400, "Format tidak didukung. Gunakan PDF, Excel, Word, atau CSV")
+    data = await file.read()
+    if len(data) > MAX_DOC_BYTES: raise HTTPException(400, "Ukuran file maksimal 15 MB")
+    path = f"{APP_NAME}/documents/{indicator}/{year}/{uuid.uuid4()}.{ext}"
+    try:
+        result = await run_in_threadpool(put_object, path, data, ALLOWED_DOCS[ext])
+    except Exception as e:
+        logger.error(f"Upload gagal: {e}")
+        raise HTTPException(502, "Gagal mengunggah ke penyimpanan")
+    doc = {"indicator": indicator, "year": year, "filename": file.filename, "content_type": ALLOWED_DOCS[ext], "size": result["size"],
+           "storage_path": result["path"], "keterangan": keterangan.strip(), "is_deleted": False, "created_at": datetime.now(timezone.utc).isoformat()}
+    r = await db.documents.insert_one(doc)
+    doc["_id"] = r.inserted_id
+    return doc_out(doc)
+
+
+@api.get("/documents/{doc_id}/download")
+async def download_document(doc_id: str):
+    if not ObjectId.is_valid(doc_id): raise HTTPException(404, "Dokumen tidak ditemukan")
+    d = await db.documents.find_one({"_id": ObjectId(doc_id), "is_deleted": False})
+    if not d: raise HTTPException(404, "Dokumen tidak ditemukan")
+    data, ct = await run_in_threadpool(get_object, d["storage_path"])
+    safe = quote(d["filename"])
+    return Response(content=data, media_type=d.get("content_type", ct),
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{safe}"})
+
+
+@api.delete("/documents/{doc_id}")
+async def delete_document(doc_id: str, _=Depends(current_admin)):
+    if not ObjectId.is_valid(doc_id): raise HTTPException(404, "Dokumen tidak ditemukan")
+    r = await db.documents.update_one({"_id": ObjectId(doc_id), "is_deleted": False}, {"$set": {"is_deleted": True}})
+    if not r.matched_count: raise HTTPException(404, "Dokumen tidak ditemukan")
+    return {"ok": True}
+
+
 app.include_router(api)
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ['CORS_ORIGINS'].split(','),
                    allow_methods=["*"], allow_headers=["*"])
@@ -321,6 +393,12 @@ async def startup():
     await db.units.create_index([("type", 1), ("name", 1)], unique=True)
     await db.targets.create_index([("indicator", 1), ("year", 1), ("unit_id", 1)], unique=True)
     await db.capaian.create_index([("indicator", 1), ("year", 1), ("unit_id", 1), ("month", 1)], unique=True)
+    await db.documents.create_index([("indicator", 1), ("year", 1), ("is_deleted", 1)])
+    try:
+        await run_in_threadpool(init_storage)
+        logger.info("Object storage initialized")
+    except Exception as e:
+        logger.error(f"Storage init failed: {e}")
     email, pw = os.environ["ADMIN_EMAIL"].lower(), os.environ["ADMIN_PASSWORD"]
     ex = await db.users.find_one({"email": email})
     if not ex:

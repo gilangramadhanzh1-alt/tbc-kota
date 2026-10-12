@@ -24,7 +24,7 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-[#0F172A] text-white p-12 grain relative">
-        <div className="flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-amber-500 grid place-items-center"><Activity className="h-5 w-5 text-slate-900" /></div><span className="font-heading font-extrabold">BANK DATA TBC</span></div>
+        <div className="flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-amber-500 grid place-items-center"><Activity className="h-5 w-5 text-slate-900" /></div><span className="font-heading font-extrabold">DATA TBC KOTA SUKABUMI</span></div>
         <div>
           <div className="font-mono text-amber-400 text-xs tracking-widest">KOTA SUKABUMI</div>
           <h1 className="font-heading text-5xl font-extrabold tracking-tight mt-3 leading-[1.05]">Satu sumber data<br />untuk eliminasi TBC.</h1>
