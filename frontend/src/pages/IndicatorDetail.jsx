@@ -61,8 +61,8 @@ export default function IndicatorDetail() {
       <PeriodFilter showUnit={false} />
       <Tabs value={filter.unitType} onValueChange={(v) => setFilter({ unitType: v })}>
         <TabsList className="bg-slate-200/60">
-          {kelurahanAllowed && <TabsTrigger value="kelurahan" data-testid="tab-kelurahan-view">Per Kelurahan</TabsTrigger>}
-          <TabsTrigger value="faskes" data-testid="tab-faskes-view">Per Faskes</TabsTrigger>
+          {kelurahanAllowed && <TabsTrigger value="kelurahan" data-testid="tab-kelurahan-view">Kelurahan</TabsTrigger>}
+          <TabsTrigger value="faskes" data-testid="tab-faskes-view">Faskes</TabsTrigger>
         </TabsList>
       </Tabs>
       {noTarget ? (
@@ -86,7 +86,7 @@ export default function IndicatorDetail() {
       </section>
       )}
       <div className="grid xl:grid-cols-2 gap-6">
-        <ChartCard testid="chart-per-unit" title={noTarget ? `Capaian per ${unitLabel}` : `Target vs Capaian per ${unitLabel}`} subtitle={period} filename={`${indicator.code}_per_${unitLabel}_${period.replace(/\s+/g, "_")}`}>
+        <ChartCard testid="chart-per-unit" title={noTarget ? `Capaian ${unitLabel}` : `Target vs Capaian ${unitLabel}`} subtitle={period} filename={`${indicator.code}_${unitLabel}_${period.replace(/\s+/g, "_")}`}>
           <ResponsiveContainer>
             <BarChart data={barData} margin={{ left: -15, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -99,7 +99,7 @@ export default function IndicatorDetail() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
-        <ChartCard testid="chart-trend" title="Tren Bulanan & Kumulatif" subtitle={`Tahun ${filter.year} · per ${unitLabel}`} filename={`${indicator.code}_tren_${filter.year}`}>
+        <ChartCard testid="chart-trend" title="Tren Bulanan & Kumulatif" subtitle={`Tahun ${filter.year} · ${unitLabel}`} filename={`${indicator.code}_tren_${filter.year}`}>
           <ResponsiveContainer>
             <ComposedChart data={trend} margin={{ left: -15 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />

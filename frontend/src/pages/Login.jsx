@@ -28,7 +28,7 @@ export default function Login() {
         <div>
           <div className="font-mono text-amber-400 text-xs tracking-widest">KOTA SUKABUMI</div>
           <h1 className="font-heading text-5xl font-extrabold tracking-tight mt-3 leading-[1.05]">Satu sumber data<br />untuk eliminasi TBC.</h1>
-          <p className="text-slate-400 mt-4 max-w-md">Input target tahunan dan capaian bulanan per kelurahan dan faskes. Rekap triwulan, semester dan tahunan dihitung otomatis.</p>
+          <p className="text-slate-400 mt-4 max-w-md">Input target tahunan dan capaian bulanan kelurahan dan faskes. Rekap triwulan, semester dan tahunan dihitung otomatis.</p>
         </div>
         <div className="text-xs text-slate-500">Dinas Kesehatan Kota Sukabumi</div>
       </div>

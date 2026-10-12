@@ -41,7 +41,7 @@ export function PeriodFilter({ showUnit = true }) {
       )}
       {showUnit && (
         <Field label="Basis Data">
-          <SimpleSelect testid="filter-unit-select" value={filter.unitType} onChange={(v) => setFilter({ unitType: v })} options={[{ value: "kelurahan", label: "Per Kelurahan" }, { value: "faskes", label: "Per Faskes" }]} />
+          <SimpleSelect testid="filter-unit-select" value={filter.unitType} onChange={(v) => setFilter({ unitType: v })} options={[{ value: "kelurahan", label: "Kelurahan" }, { value: "faskes", label: "Faskes" }]} />
         </Field>
       )}
     </div>

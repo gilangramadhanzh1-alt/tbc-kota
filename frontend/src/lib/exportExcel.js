@@ -4,7 +4,7 @@ export function exportReportExcel({ indicator, unitLabel, period, rows, total, n
   const header = [
     ["DATA TBC KOTA SUKABUMI"],
     [`Indikator: ${indicator.no}. ${indicator.name}`],
-    [`Periode: ${period}`, "", `Per ${unitLabel}`],
+    [`Periode: ${period}`, "", `${unitLabel}`],
     [],
     noTarget ? ["No", unitLabel, "Capaian Angka"] : ["No", unitLabel, "Target Tahunan", "Target Angka (Periode)", "Target %", "Capaian Angka", "Capaian %", "Status"],
   ];
@@ -20,7 +20,7 @@ export function exportReportExcel({ indicator, unitLabel, period, rows, total, n
 export function exportSummaryExcel({ data, period, unitLabel, noTarget = false, year = "" }) {
   const aoa = [
     ["DATA TBC KOTA SUKABUMI - REKAP INDIKATOR"],
-    [`Periode: ${period}`, "", `Basis: Per ${unitLabel}`],
+    [`Periode: ${period}`, "", `Basis: ${unitLabel}`],
     [],
     noTarget ? ["No", "Indikator", "Total Capaian Angka"] : ["No", "Indikator", `Target Kota ${year} (Tahunan)`, "Target Angka (Periode)", "Target %", "Total Capaian Angka", "Total Capaian %", "Status"],
     ...data.map((d) => noTarget ? [d.no, d.name, d.capaian_angka] : [d.no, d.name, d.target_tahunan, d.target_angka, d.target_persen, d.capaian_angka, d.capaian_persen, d.target_angka ? (d.tercapai ? "Tercapai" : "Belum Tercapai") : "-"]),

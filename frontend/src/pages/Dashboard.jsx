@@ -66,7 +66,7 @@ export default function Dashboard() {
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-600">Dinas Kesehatan · Program TBC</div>
           <h1 className="font-heading text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mt-2">Data TBC Kota Sukabumi</h1>
-          <p className="text-slate-500 mt-2 text-sm sm:text-base">Rekap {data.length} indikator · {period} · basis per {unitLabel.toLowerCase()}</p>
+          <p className="text-slate-500 mt-2 text-sm sm:text-base">Rekap {data.length} indikator · {period} · basis {unitLabel}</p>
         </div>
         <button onClick={() => exportSummaryExcel({ data, period, unitLabel, noTarget, year: filter.year })} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 transition-colors" data-testid="btn-export-summary-excel">
           <FileSpreadsheet className="h-4 w-4" />Export Excel
@@ -77,7 +77,7 @@ export default function Dashboard() {
         {data.map((d, i) => <KpiCard key={d.id} d={d} i={i} noTarget={noTarget} year={filter.year} />)}
       </section>
       {noTarget && <p className="text-xs text-slate-500 -mt-4" data-testid="kelurahan-note">Basis kelurahan tidak memiliki target; hanya menampilkan capaian angka untuk Treatment Coverage dan Penemuan Kasus TB RO.</p>}
-      <ChartCard testid="chart-summary" title={noTarget ? "Capaian (Angka) per Indikator" : "Capaian (%) per Indikator"} subtitle={`${period} · per ${unitLabel}`} filename={`Rekap_Capaian_${period.replace(/\s+/g, "_")}`}>
+      <ChartCard testid="chart-summary" title={noTarget ? "Capaian (Angka) per Indikator" : "Capaian (%) per Indikator"} subtitle={`${period} · ${unitLabel}`} filename={`Rekap_Capaian_${period.replace(/\s+/g, "_")}`}>
         <ResponsiveContainer>
           <BarChart data={chart} margin={{ left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />

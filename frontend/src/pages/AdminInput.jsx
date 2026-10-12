@@ -62,7 +62,7 @@ export default function AdminInput() {
       <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-end gap-4">
         <Field label="Indikator"><SimpleSelect testid="input-indicator-select" value={ind} onChange={setInd} options={indOptions.map((i) => ({ value: i.id, label: `${i.no}. ${i.name}` }))} className="min-w-[300px]" /></Field>
         <Field label="Tahun"><SimpleSelect testid="input-year-select" value={year} onChange={(v) => setYear(Number(v))} options={YEARS.map((y) => ({ value: y, label: String(y) }))} /></Field>
-        <Field label="Basis Data"><SimpleSelect testid="input-unit-select" value={unitType} onChange={setUnitType} options={[{ value: "kelurahan", label: "Per Kelurahan" }, { value: "faskes", label: "Per Faskes" }]} /></Field>
+        <Field label="Basis Data"><SimpleSelect testid="input-unit-select" value={unitType} onChange={setUnitType} options={[{ value: "kelurahan", label: "Kelurahan" }, { value: "faskes", label: "Faskes" }]} /></Field>
       </div>
       <div className="overflow-auto rounded-xl border border-slate-200 bg-white max-h-[70vh]" data-testid="input-grid">
         <table className="text-sm w-full">

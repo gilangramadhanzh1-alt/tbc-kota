@@ -24,6 +24,7 @@ User choices: input manual via form (editable); admin login for input, public vi
 - Dokumen Pendukung per indikator & tahun (Emergent Object Storage, `backend/storage.py`): `POST /api/documents` (admin, multipart, PDF/Excel/Word/CSV ≤15MB), `GET /api/documents`, `GET /api/documents/{id}/download` (publik), `DELETE /api/documents/{id}` (soft delete). UI `DocumentPanel.jsx` di halaman detail indikator.
 - Branding diganti "DATA TBC KOTA SUKABUMI" (sidebar, H1, login, title, header Excel).
 - Tested: backend 33/33, frontend flows pass (iteration_2.json).
+- Semua label "Per Kelurahan/Per Faskes" diubah menjadi "Kelurahan/Faskes" (filter, tab, judul grafik, subjudul, Excel).
 - Urutan indikator diubah: 3. Enrollment TB SO, 4. Keberhasilan Pengobatan (sidebar, dashboard, dropdown mengikuti otomatis dari backend INDICATORS). untuk indikator Treatment Coverage & Penemuan Kasus TB RO: baris tanpa target, hanya capaian angka 12 bulan; ikut dijumlahkan ke Total Capaian Kota & tren; tampil di basis Faskes dan Kelurahan; input di grid admin (target nonaktif); Excel menandai "(tanpa target)". ditampilkan eksplisit di kartu dashboard, kolom tabel rekap, stat detail indikator ("Target Kota {tahun}" + "Target Periode"), footer admin input, dan header Excel. Hanya untuk basis Faskes. Capaian % = capaian ÷ target periode.
 
 ## Backlog
