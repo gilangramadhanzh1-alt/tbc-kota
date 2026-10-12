@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 3 verified 4 new features: (1) Import Excel in /admin/input, (2) Year-over-year delta on Dashboard & IndicatorDetail trend chart, (3) /peta Kelurahan tile map, (4) /admin/users Kelola Admin. Backend: added 17 new pytest tests (TestLuarKotaRegression x2, TestAdmins x11, TestChangePassword x2 plus an inlined duplicate email case) covering admins CRUD & auth guards, LUAR KOTA regression. Full backend suite = 50/50 passed. Frontend (Playwright on preview URL): /peta shows nav-peta, peta-title, peta-total, peta-top5, peta-map-download-png, all 7 kecamatan containers, tiles, and peta-indicator-select switches reload. Dashboard year=2026 shows 2 kelurahan KPI cards (TC/Penemuan RO) each with indicator-card-{id}-delta containing 'vs 2025' (e.g. '+5 vs 2025'). IndicatorDetail /indikator/treatment_coverage shows stat-delta ('+5 dari 0') and chart legend contains both 'Kumulatif 2025' and 'Kumulatif 2026'. /admin/input: btn-download-template & btn-import-excel visible; set_input_files on import-excel-input with an openpyxl-generated xlsx (header Faskes,Target Angka,Target %,Jan..Des; row PUSKESMAS BAROS,120,100,5,6,7,0..) populated the grid (target=120, Jan=5), save succeeded, then values reset to zero for cleanup. /admin/users: add-admin-form added qa.test@example.com with status Aktif; owner row has 'Utama' badge and NO toggle/delete buttons; toggled created admin → Nonaktif; deleted via admin-delete + admin-delete-confirm; change-password-form with wrong old password showed 'Password lama salah' toast. Owner password preserved.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "CORS", "issue": "CORS_ORIGINS='*' with allow_credentials=True still present (same as iter 1&2). Non-blocking."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Admin endpoints correctly protect owner (ADMIN_EMAIL) from toggle/delete and prevent self-delete/self-deactivate (server.py lines 265-278).",
+    "AdminIn uses min_length=8 for password → FastAPI returns 422 (not 400) for short password. Request said '422 if shorter' and it matches.",
+    "Create admin lowercases email (line 251) and rejects duplicates (400). Good.",
+    "/api/auth/password requires current_admin and verifies old password with bcrypt. Clean.",
+    "list_admins uses admin_out() which strips _id and adds is_owner flag. No ObjectId leak.",
+    "PetaKelurahan.jsx correctly groups 33 kelurahan into 7 kecamatan via KECAMATAN config and filters out luar_kota from tiles. heatColor based on capaian_angka/max.",
+    "Dashboard fetches current-year + previous-year summary and passes `prev` row to KpiCard; Delta renders both for noTarget (angka diff) and target (percent-point diff).",
+    "IndicatorDetail Trend chart adds 'Kumulatif {year-1}' Line in grey (#94A3B8) and current year highlighted — legend renders both as verified.",
+    "importExcel.js parses header against MONTHS_SHORT + 'Target Angka'/'Target %'; works with openpyxl-generated xlsx."
+  ],
+  "updated_files": ["/app/backend/tests/backend_test.py"],
+  "success_rate": {"backend": "100% (50/50 pytest)", "frontend": "100% of requested flows"},
+  "test_credentials": "Owner: gilangramadhan.zh1@gmail.com / Sukabumi2026! (verified). Extra admin: operator.tbc@sukabumikota.go.id / Operator2026! (NOT touched).",
+  "seed_data_creation": "Backend TestAdmins creates test_admin_pytest@example.com and deletes it in same class. TestChangePassword temporarily changes owner password to 'TempPytestPass2026!' then changes it back to the original. Frontend run created qa.test@example.com and deleted it. All test data cleaned up.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest suite now has 50 tests across TestPublic, TestAuth, TestUnitsCRUD, TestInputAggregation, TestValidation, TestIndicatorFiltering, TestDocuments, TestLuarKotaRegression, TestAdmins, TestChangePassword. All 4 new features (import Excel, YoY delta, peta kelurahan, admins management) work end-to-end on the preview URL. For future runs: owner password MUST be reset to 'Sukabumi2026!' if any test fails mid-change (TestChangePassword.test_change_and_change_back). Importing Excel uses client-side xlsx parsing in /app/frontend/src/lib/importExcel.js — header row must match MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']."
+}

@@ -27,6 +27,13 @@ User choices: input manual via form (editable); admin login for input, public vi
 - Semua label "Per Kelurahan/Per Faskes" diubah menjadi "Kelurahan/Faskes" (filter, tab, judul grafik, subjudul, Excel).
 - Urutan indikator diubah: 3. Enrollment TB SO, 4. Keberhasilan Pengobatan (sidebar, dashboard, dropdown mengikuti otomatis dari backend INDICATORS). untuk indikator Treatment Coverage & Penemuan Kasus TB RO: baris tanpa target, hanya capaian angka 12 bulan; ikut dijumlahkan ke Total Capaian Kota & tren; tampil di basis Faskes dan Kelurahan; input di grid admin (target nonaktif); Excel menandai "(tanpa target)". ditampilkan eksplisit di kartu dashboard, kolom tabel rekap, stat detail indikator ("Target Kota {tahun}" + "Target Periode"), footer admin input, dan header Excel. Hanya untuk basis Faskes. Capaian % = capaian ÷ target periode.
 
+## Implemented (2026-10-12, sesi 3)
+- Import Excel massal (client-side xlsx) di admin input: Unduh Template (per indikator & tahun, baris = unit, kolom Target Angka/Target %/Jan..Des) + Import Excel mengisi grid (cocokkan nama unit), lalu Simpan. `lib/importExcel.js`.
+- Perbandingan tahun: garis "Kumulatif {tahun-1}" di grafik tren detail; delta vs tahun lalu di kartu dashboard & stat detail.
+- Peta Kelurahan (/peta): tile map 33 kelurahan dikelompokkan 7 kecamatan (`lib/kecamatan.js`, sesuai data user), warna heat berdasarkan capaian angka, indikator TC / Penemuan TB RO, top 5, unduh PNG.
+- Kelola Admin (/admin/users): tambah admin, aktif/nonaktif, hapus, ubah password sendiri. Admin utama (ADMIN_EMAIL) tidak bisa dinonaktifkan/dihapus. Endpoint `/api/admins*`, `/api/auth/password`.
+- Tested: backend 50/50, frontend flows pass (iteration_3.json).
+
 ## Backlog
-- P1: Import Excel massal; riwayat perubahan (audit log); beberapa akun admin/operator per faskes.
-- P2: Perbandingan antar tahun; peta kelurahan; mode gelap.
+- P1: Riwayat perubahan (audit log).
+- P2: Mode gelap; notifikasi/pengingat input bulanan.

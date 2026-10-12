@@ -349,3 +349,172 @@ class TestDocuments:
         doc_id = up.json()["id"]
         # Cleanup
         requests.delete(f"{API}/documents/{doc_id}", headers=hdr)
+
+
+
+# ---------- NEW: LUAR KOTA regression ----------
+class TestLuarKotaRegression:
+    def test_report_treatment_coverage_includes_luar_kota(self, session):
+        r = session.get(f"{API}/report", params={
+            "indicator": "treatment_coverage", "year": 2026, "unit_type": "kelurahan",
+            "period_type": "tahunan", "period_index": 1
+        })
+        assert r.status_code == 200
+        rows = r.json()["rows"]
+        assert any(row["unit_id"] == "luar_kota" and row["unit_name"] == "LUAR KOTA" for row in rows)
+
+    def test_report_spm_terduga_no_luar_kota(self, session):
+        r = session.get(f"{API}/report", params={
+            "indicator": "spm_terduga", "year": 2026, "unit_type": "kelurahan",
+            "period_type": "tahunan", "period_index": 1
+        })
+        assert r.status_code == 200
+        rows = r.json()["rows"]
+        assert not any(row.get("unit_id") == "luar_kota" for row in rows)
+
+
+# ---------- NEW: Admins endpoints ----------
+OWNER_EMAIL = "gilangramadhan.zh1@gmail.com"
+OWNER_PASSWORD = "Sukabumi2026!"
+
+
+class TestAdmins:
+    created_id = None
+    created_token = None
+    TEST_EMAIL = "test_admin_pytest@example.com"
+    TEST_PASSWORD = "TestPytest2026!"
+
+    def test_list_requires_auth(self):
+        r = requests.get(f"{API}/admins")
+        assert r.status_code == 401
+
+    def test_list_with_auth(self, auth_headers):
+        r = requests.get(f"{API}/admins", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        emails = [a["email"] for a in data]
+        assert OWNER_EMAIL in emails
+        owner = next(a for a in data if a["email"] == OWNER_EMAIL)
+        assert owner["is_owner"] is True
+        # Ensure no _id leaking
+        assert all("_id" not in a for a in data)
+
+    def test_create_admin_password_too_short(self, auth_headers):
+        r = requests.post(f"{API}/admins", json={
+            "email": "short_pw_pytest@example.com", "name": "T", "password": "short"
+        }, headers=auth_headers)
+        assert r.status_code == 422
+
+    def test_create_admin(self, auth_headers):
+        # Cleanup pre-existing
+        lst = requests.get(f"{API}/admins", headers=auth_headers).json()
+        pre = next((a for a in lst if a["email"] == self.TEST_EMAIL), None)
+        if pre:
+            requests.delete(f"{API}/admins/{pre['id']}", headers=auth_headers)
+
+        r = requests.post(f"{API}/admins", json={
+            "email": "TEST_ADMIN_PYTEST@Example.com".replace("TEST_ADMIN_PYTEST", "test_admin_pytest"),
+            "name": "QA Pytest", "password": self.TEST_PASSWORD
+        }, headers=auth_headers)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        # Email lowercased
+        assert d["email"] == self.TEST_EMAIL
+        assert d["is_active"] is True
+        assert d["is_owner"] is False
+        TestAdmins.created_id = d["id"]
+
+    def test_create_duplicate_email_400(self, auth_headers):
+        r = requests.post(f"{API}/admins", json={
+            "email": self.TEST_EMAIL.upper(), "name": "Dup", "password": "AnotherPass123!"
+        }, headers=auth_headers)
+        assert r.status_code == 400
+
+    def test_new_admin_can_login(self, session):
+        r = session.post(f"{API}/auth/login", json={
+            "email": self.TEST_EMAIL, "password": self.TEST_PASSWORD
+        })
+        assert r.status_code == 200, r.text
+        token = r.json()["token"]
+        TestAdmins.created_token = token
+        # Can call /auth/me
+        me = requests.get(f"{API}/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert me.status_code == 200
+        assert me.json()["email"] == self.TEST_EMAIL
+
+    def test_toggle_active_deactivates(self, auth_headers):
+        uid = TestAdmins.created_id
+        assert uid
+        r = requests.patch(f"{API}/admins/{uid}/active", headers=auth_headers)
+        assert r.status_code == 200
+        assert r.json()["is_active"] is False
+
+    def test_deactivated_cannot_login(self, session):
+        r = session.post(f"{API}/auth/login", json={
+            "email": self.TEST_EMAIL, "password": self.TEST_PASSWORD
+        })
+        assert r.status_code == 401
+
+    def test_toggle_active_reactivates(self, auth_headers):
+        uid = TestAdmins.created_id
+        r = requests.patch(f"{API}/admins/{uid}/active", headers=auth_headers)
+        assert r.status_code == 200
+        assert r.json()["is_active"] is True
+
+    def test_toggle_owner_rejected(self, auth_headers):
+        lst = requests.get(f"{API}/admins", headers=auth_headers).json()
+        owner_id = next(a["id"] for a in lst if a["email"] == OWNER_EMAIL)
+        r = requests.patch(f"{API}/admins/{owner_id}/active", headers=auth_headers)
+        assert r.status_code == 400
+
+    def test_delete_owner_rejected(self, auth_headers):
+        lst = requests.get(f"{API}/admins", headers=auth_headers).json()
+        owner_id = next(a["id"] for a in lst if a["email"] == OWNER_EMAIL)
+        r = requests.delete(f"{API}/admins/{owner_id}", headers=auth_headers)
+        assert r.status_code == 400
+
+    def test_self_delete_rejected(self, auth_headers):
+        # Owner is calling delete on itself; owner-check hits first (400). We also test
+        # the self-delete guard with a non-owner by logging in as the created admin and
+        # trying to delete itself.
+        token = TestAdmins.created_token
+        uid = TestAdmins.created_id
+        r = requests.delete(f"{API}/admins/{uid}", headers={"Authorization": f"Bearer {token}"})
+        assert r.status_code == 400
+
+    def test_delete_test_admin(self, auth_headers):
+        uid = TestAdmins.created_id
+        r = requests.delete(f"{API}/admins/{uid}", headers=auth_headers)
+        assert r.status_code == 200
+        # Verify gone
+        lst = requests.get(f"{API}/admins", headers=auth_headers).json()
+        assert not any(a["id"] == uid for a in lst)
+
+
+class TestChangePassword:
+    def test_wrong_old_password(self, auth_headers):
+        r = requests.put(f"{API}/auth/password", json={
+            "old_password": "WrongOldPass2026!", "new_password": "WhateverNewPass2026!"
+        }, headers=auth_headers)
+        assert r.status_code == 400
+
+    def test_change_and_change_back(self, auth_headers):
+        temp_new = "TempPytestPass2026!"
+        # Change
+        r = requests.put(f"{API}/auth/password", json={
+            "old_password": OWNER_PASSWORD, "new_password": temp_new
+        }, headers=auth_headers)
+        assert r.status_code == 200, r.text
+        # Login with new
+        login = requests.post(f"{API}/auth/login", json={"email": OWNER_EMAIL, "password": temp_new})
+        assert login.status_code == 200
+        new_token = login.json()["token"]
+        # Change back
+        r2 = requests.put(f"{API}/auth/password", json={
+            "old_password": temp_new, "new_password": OWNER_PASSWORD
+        }, headers={"Authorization": f"Bearer {new_token}"})
+        assert r2.status_code == 200
+        # Confirm original works again
+        login2 = requests.post(f"{API}/auth/login", json={"email": OWNER_EMAIL, "password": OWNER_PASSWORD})
+        assert login2.status_code == 200
