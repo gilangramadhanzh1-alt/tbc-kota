@@ -90,7 +90,7 @@ export default function AdminInput() {
           </tbody>
           <tfoot className="sticky bottom-0">
             <tr className="bg-slate-900 text-white font-mono text-xs">
-              <td className="px-2 py-2.5 font-heading font-bold uppercase sticky left-0 bg-slate-900">Total</td>
+              <td className="px-2 py-2.5 font-heading font-bold uppercase sticky left-0 bg-slate-900">{noTarget ? "Total" : "Target Kota / Total"}</td>
               {!noTarget && <td className="px-2 text-right" data-testid="input-total-target">{fmt(rows.reduce((s, r) => s + r.target_angka, 0))}</td>}
               {!noTarget && <td />}
               {MONTHS_SHORT.map((m, k) => <td key={m} className="px-2 text-right">{fmt(colTotal(k))}</td>)}

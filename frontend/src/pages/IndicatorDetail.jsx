@@ -71,8 +71,9 @@ export default function IndicatorDetail() {
           <div className="bg-white rounded-xl border border-slate-200 p-4 text-xs text-slate-500 flex items-center" data-testid="kelurahan-note">Basis kelurahan tidak memiliki target, hanya capaian angka yang ditampilkan.</div>
         </section>
       ) : (
-      <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Stat label="Target Angka" value={fmt(total.target_angka)} testid="stat-target-angka" />
+      <section className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <Stat label={`Target Kota ${filter.year}`} value={fmt(total.target_tahunan)} testid="stat-target-kota" accent="text-blue-900" />
+        <Stat label="Target Periode" value={fmt(total.target_angka)} testid="stat-target-angka" />
         <Stat label="Target %" value={fmtPct(total.target_persen)} testid="stat-target-persen" />
         <Stat label="Total Capaian Angka" value={fmt(total.capaian_angka)} testid="stat-capaian-angka" accent="text-blue-700" />
         <Stat label="Total Capaian %" value={fmtPct(total.capaian_persen)} testid="stat-capaian-persen" accent="text-blue-700" />
@@ -80,6 +81,8 @@ export default function IndicatorDetail() {
           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Status Kota</div>
           <StatusPill capaian={total.capaian_persen} target={total.target_persen} targetAngka={total.target_angka} testid="stat-status" />
         </div>
+        {/* Target Kota = jumlah target tahunan seluruh faskes */}
+        <p className="col-span-2 lg:col-span-6 text-[11px] text-slate-500 -mt-1" data-testid="target-kota-note">Target Kota = jumlah target tahunan seluruh faskes. Target Periode = Target Kota × (jumlah bulan ÷ 12). Capaian % = capaian ÷ target periode.</p>
       </section>
       )}
       <div className="grid xl:grid-cols-2 gap-6">

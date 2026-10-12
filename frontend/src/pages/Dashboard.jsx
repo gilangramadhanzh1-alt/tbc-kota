@@ -11,7 +11,7 @@ import { statusColor } from "@/components/StatusPill";
 import { fmt, fmtPct, periodLabel, status } from "@/lib/period";
 import { exportSummaryExcel } from "@/lib/exportExcel";
 
-function KpiCard({ d, i, noTarget }) {
+function KpiCard({ d, i, noTarget, year }) {
   const s = status(d.capaian_persen, d.target_persen, d.target_angka);
   const w = Math.min(100, d.capaian_persen);
   if (noTarget) return (
@@ -39,6 +39,10 @@ function KpiCard({ d, i, noTarget }) {
       <div className="mt-2 flex justify-between text-[11px] text-slate-500 font-mono">
         <span>{fmt(d.capaian_angka)} / {fmt(d.target_angka)}</span><span>target {fmtPct(d.target_persen)}</span>
       </div>
+      <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[11px]">
+        <span className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">Target Kota {year}</span>
+        <span className="font-mono font-semibold text-slate-800" data-testid={`indicator-card-${d.id}-target-kota`}>{fmt(d.target_tahunan)}</span>
+      </div>
     </Link>
   );
 }
@@ -64,13 +68,13 @@ export default function Dashboard() {
           <h1 className="font-heading text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mt-2">Data TBC Kota Sukabumi</h1>
           <p className="text-slate-500 mt-2 text-sm sm:text-base">Rekap {data.length} indikator · {period} · basis per {unitLabel.toLowerCase()}</p>
         </div>
-        <button onClick={() => exportSummaryExcel({ data, period, unitLabel, noTarget })} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 transition-colors" data-testid="btn-export-summary-excel">
+        <button onClick={() => exportSummaryExcel({ data, period, unitLabel, noTarget, year: filter.year })} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 transition-colors" data-testid="btn-export-summary-excel">
           <FileSpreadsheet className="h-4 w-4" />Export Excel
         </button>
       </header>
       <PeriodFilter />
       <section className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="kpi-grid">
-        {data.map((d, i) => <KpiCard key={d.id} d={d} i={i} noTarget={noTarget} />)}
+        {data.map((d, i) => <KpiCard key={d.id} d={d} i={i} noTarget={noTarget} year={filter.year} />)}
       </section>
       {noTarget && <p className="text-xs text-slate-500 -mt-4" data-testid="kelurahan-note">Basis kelurahan tidak memiliki target; hanya menampilkan capaian angka untuk Treatment Coverage dan Penemuan Kasus TB RO.</p>}
       <ChartCard testid="chart-summary" title={noTarget ? "Capaian (Angka) per Indikator" : "Capaian (%) per Indikator"} subtitle={`${period} · per ${unitLabel}`} filename={`Rekap_Capaian_${period.replace(/\s+/g, "_")}`}>
@@ -89,7 +93,7 @@ export default function Dashboard() {
       </ChartCard>
       <div>
         <h2 className="font-heading text-lg font-semibold mb-3">Rekap Total Capaian Kota</h2>
-        <ReportTable rows={data} unitLabel="Indikator" showLinks noTarget={noTarget} />
+        <ReportTable rows={data} unitLabel="Indikator" showLinks noTarget={noTarget} showTargetKota={!noTarget} year={filter.year} />
       </div>
     </div>
   );

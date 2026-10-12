@@ -24,6 +24,7 @@ User choices: input manual via form (editable); admin login for input, public vi
 - Dokumen Pendukung per indikator & tahun (Emergent Object Storage, `backend/storage.py`): `POST /api/documents` (admin, multipart, PDF/Excel/Word/CSV ≤15MB), `GET /api/documents`, `GET /api/documents/{id}/download` (publik), `DELETE /api/documents/{id}` (soft delete). UI `DocumentPanel.jsx` di halaman detail indikator.
 - Branding diganti "DATA TBC KOTA SUKABUMI" (sidebar, H1, login, title, header Excel).
 - Tested: backend 33/33, frontend flows pass (iteration_2.json).
+- Target Kota (= jumlah target tahunan seluruh faskes, otomatis) ditampilkan eksplisit di kartu dashboard, kolom tabel rekap, stat detail indikator ("Target Kota {tahun}" + "Target Periode"), footer admin input, dan header Excel. Hanya untuk basis Faskes. Capaian % = capaian ÷ target periode.
 
 ## Backlog
 - P1: Import Excel massal; riwayat perubahan (audit log); beberapa akun admin/operator per faskes.

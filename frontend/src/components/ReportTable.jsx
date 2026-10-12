@@ -5,7 +5,7 @@ import StatusPill from "@/components/StatusPill";
 const th = "px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap";
 const td = "px-3 py-2.5 font-mono text-right whitespace-nowrap";
 
-export default function ReportTable({ rows, total, unitLabel, showLinks = false, noTarget = false }) {
+export default function ReportTable({ rows, total, unitLabel, showLinks = false, noTarget = false, showTargetKota = false, year }) {
   if (noTarget) return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white" data-testid="report-table">
       <table className="w-full text-sm">
@@ -39,6 +39,7 @@ export default function ReportTable({ rows, total, unitLabel, showLinks = false,
           <tr>
             <th className={`${th} text-left w-10`}>No</th>
             <th className={`${th} text-left`}>{unitLabel}</th>
+            {showTargetKota && <th className={`${th} text-right bg-blue-50 text-blue-800`}>Target Kota {year}</th>}
             <th className={`${th} text-right`}>Target Angka</th>
             <th className={`${th} text-right`}>Target %</th>
             <th className={`${th} text-right`}>Capaian Angka</th>
@@ -53,6 +54,7 @@ export default function ReportTable({ rows, total, unitLabel, showLinks = false,
               <td className="px-3 py-2.5 font-medium text-slate-800">
                 {showLinks ? <Link to={`/indikator/${r.id}`} className="hover:text-blue-600 hover:underline" data-testid={`report-link-${r.id}`}>{r.name}</Link> : r.unit_name || r.name}
               </td>
+              {showTargetKota && <td className={`${td} bg-blue-50/40 font-semibold text-blue-900`} data-testid={`report-target-kota-${i}`}>{fmt(r.target_tahunan)}</td>}
               <td className={td}>{fmt(r.target_angka)}</td>
               <td className={`${td} text-slate-500`}>{fmtPct(r.target_persen)}</td>
               <td className={`${td} font-semibold text-slate-900`}>{fmt(r.capaian_angka)}</td>
@@ -66,6 +68,7 @@ export default function ReportTable({ rows, total, unitLabel, showLinks = false,
             <tr className="bg-slate-900 text-white" data-testid="report-total-row">
               <td />
               <td className="px-3 py-3 font-heading font-bold text-xs uppercase tracking-wider">Total Capaian Kota</td>
+              {showTargetKota && <td className={td} />}
               <td className={td} data-testid="total-target-angka">{fmt(total.target_angka)}</td>
               <td className={`${td} text-slate-300`} data-testid="total-target-persen">{fmtPct(total.target_persen)}</td>
               <td className={`${td} font-bold text-amber-300`} data-testid="total-capaian-angka">{fmt(total.capaian_angka)}</td>
